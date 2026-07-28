@@ -1,0 +1,23 @@
+{
+  "name": "@red-cup-engineering/gcloud-services-section",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Google Cloud command actuators carried as Union network actors.",
+  "x-agentic-metro-enterprise": {
+    "node-id": "gcloud-services-section",
+    "actor": "urn:ame:gcloud-services-section",
+    "organizational-kind": "service-section",
+    "owners": ["red-cup-engineering"],
+    "membrane": {"law": "services/", "lasting-instances": "content/", "append-only-instances": "data/"}
+  },
+  "x-semiotic-voxel": {
+    "profile": "org.harmonious-union.semiotic-voxel.v1",
+    "owner": "red-cup-engineering",
+    "kind": "actor-member",
+    "actor": "urn:ame:gcloud-services-section",
+    "operations": ["discover-cloud-run-service", "deploy-cloud-run-service", "invoke-cloud-run-service"],
+    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["discover", "deploy", "invoke"]}],
+    "package": "@red-cup-engineering/gcloud-services-section"
+  }
+}

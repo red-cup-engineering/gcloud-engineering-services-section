@@ -1,0 +1,33 @@
+{
+  "name": "@red-cup-engineering/gcloud-cloud-run-actuator-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A network-addressable actor that executes bounded Google Cloud Run operations through the installed Google Cloud SDK.",
+  "exports": {".": "./src/gcloud-cloud-run-actuator.mjs"},
+  "bin": {"gcloud-cloud-run-actuator": "./bin/gcloud-cloud-run-actuator.mjs", "serve-gcloud-cloud-run-actuator": "./bin/serve.mjs"},
+  "scripts": {"check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check bin/gcloud-cloud-run-actuator.mjs && node --check bin/serve.mjs"},
+  "x-agentic-metro-enterprise": {
+    "node-id": "gcloud-cloud-run-actuator-service",
+    "actor": "urn:ame:gcloud-cloud-run-actuator-service",
+    "organizational-kind": "autonomously-articulating-actor-member",
+    "owners": ["gcloud-services-section"],
+    "membrane": {"law": "src/", "lasting-instances": "content/", "append-only-instances": "data/"},
+    "admission": "a bounded Cloud Run operation addressed to this actor, with an authenticated bearer for deployment or invocation",
+    "refusal": "arbitrary gcloud arguments, commands outside Cloud Run, a missing deployment image, an invalid service name, missing authority for mutation, or any persistence request",
+    "operation-catalog": {
+      "discover-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDiscoveryReceipt"},
+      "deploy-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDeploymentReceipt"},
+      "invoke-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunInvocationReceipt"}
+    }
+  },
+  "x-semiotic-voxel": {
+    "profile": "org.harmonious-union.semiotic-voxel.v1",
+    "owner": "red-cup-engineering",
+    "kind": "actor-member",
+    "actor": "urn:ame:gcloud-cloud-run-actuator-service",
+    "operations": ["discover-cloud-run-service", "deploy-cloud-run-service", "invoke-cloud-run-service"],
+    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["A2A", "ActivityPub", "CLI"]}],
+    "package": "@red-cup-engineering/gcloud-cloud-run-actuator-service"
+  }
+}

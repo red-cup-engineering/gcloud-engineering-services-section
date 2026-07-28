@@ -1,0 +1,5 @@
+// One bounded Google Cloud operation becomes one actor Activity and receipt.
+// Payload data is carried by the federated ActivityPub JSONL stream; this
+// actor keeps no database and does not accept arbitrary shell or gcloud input.
+actor urn:ame:gcloud-cloud-run-actuator-service
+operations discover-cloud-run-service deploy-cloud-run-service invoke-cloud-run-service
