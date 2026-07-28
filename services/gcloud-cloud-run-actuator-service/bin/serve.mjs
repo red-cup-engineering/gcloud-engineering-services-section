@@ -5,9 +5,9 @@ import { ACTOR_ID, actuate, agentCard } from "../src/gcloud-cloud-run-actuator.m
 const port = Number(process.env.PORT ?? 8080);
 const host = process.env.HOST ?? "0.0.0.0";
 const base = process.env.BASE_URL ?? `http://127.0.0.1:${port}`;
-const bearer = process.env.ACTUATOR_BEARER_TOKEN;
+const capability = process.env.ACTUATOR_CAPABILITY_TOKEN ?? process.env.ACTUATOR_BEARER_TOKEN;
 function send(response, status, value, type = "application/json") { response.writeHead(status, { "content-type": type }); response.end(typeof value === "string" ? value : JSON.stringify(value)); }
-function authorized(request) { return Boolean(bearer) && request.headers.authorization === `Bearer ${bearer}`; }
+function authorized(request) { return Boolean(capability) && request.headers["x-actuator-capability"] === capability; }
 async function body(request) { const chunks = []; for await (const part of request) chunks.push(part); return JSON.parse(Buffer.concat(chunks).toString("utf8")); }
 createServer(async (request, response) => {
   const path = new URL(request.url, base).pathname;
@@ -19,7 +19,7 @@ createServer(async (request, response) => {
   try {
     const rpc = await body(request); const input = rpc?.params?.input ?? rpc?.params;
     if (!input || typeof input !== "object") throw new Error("A2A request requires params.input");
-    if (input.operation !== "discover-cloud-run-service" && !authorized(request)) return send(response, 401, { jsonrpc: "2.0", id: rpc.id ?? null, error: { code: -32001, message: "mutating actuator operation requires ACTUATOR_BEARER_TOKEN" } });
+    if (input.operation !== "discover-cloud-run-service" && !authorized(request)) return send(response, 401, { jsonrpc: "2.0", id: rpc.id ?? null, error: { code: -32001, message: "mutating actuator operation requires X-Actuator-Capability" } });
     const result = await actuate(input);
     return send(response, 200, { jsonrpc: "2.0", id: rpc.id ?? null, result: { id: result.receipt.id, status: { state: "completed" }, artifacts: [{ parts: [{ kind: "text", text: result.jsonl }] }] } });
   } catch (error) { return send(response, 400, { jsonrpc: "2.0", id: null, error: { code: -32000, message: error.message } }); }
