@@ -14,7 +14,7 @@
   "x-semiotic-voxel": {
     "profile": "org.harmonious-union.semiotic-voxel.v1",
     "owner": "red-cup-engineering",
-    "kind": "actor-member",
+    "kind": "actor",
     "actor": "urn:ame:gcloud-services-section",
     "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"],
     "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["discover", "domain-mapping", "deploy", "reconcile", "invoke"]}],

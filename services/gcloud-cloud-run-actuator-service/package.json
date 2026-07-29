@@ -26,7 +26,7 @@
   "x-semiotic-voxel": {
     "profile": "org.harmonious-union.semiotic-voxel.v1",
     "owner": "red-cup-engineering",
-    "kind": "actor-member",
+    "kind": "capability-cell",
     "actor": "urn:ame:gcloud-cloud-run-actuator-service",
     "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"],
     "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["A2A", "ActivityPub", "CLI"]}],

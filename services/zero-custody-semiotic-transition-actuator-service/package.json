@@ -12,7 +12,7 @@
   "x-semiotic-voxel": {
     "profile": "org.harmonious-union.semiotic-voxel.v1",
     "owner": "red-cup-engineering",
-    "kind": "actor-member",
+    "kind": "capability-cell",
     "actor": "urn:ame:zero-custody-semiotic-transition-actuator-service",
     "operations": ["transition-semiotic-exchange"],
     "capabilities": [{"capability": "zero-custody-semiotic-transition-actuator", "faces": ["ActivityPub", "CloudEvent", "A2A", "RMN", "ERC-4337", "ERC-7677"]}],
