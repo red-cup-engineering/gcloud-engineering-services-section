@@ -1,6 +1,6 @@
 # GCloud Cloud Run Actuator carrier
 
-This deploys the actuator as a publicly reachable ActivityPub actor. Its service identity is at `/actor`; its sole public operation ingress is `/inbox`, carrying `ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))`.
+This deploys the actuator as a publicly reachable Cloud Run actor. Its agent card is at `/.well-known/agent-card.json`, its ActivityPub service identity at `/actor`, and its A2A JSON-RPC interface at `/a2a`.
 
 The actor carries no application database or object-store state. Every completed operation returns one JSONL Activity receipt for federation. Shared economic/ordering commitments can be anchored separately on `eip155:5615610`.
 
@@ -12,8 +12,7 @@ GOOGLE_CLOUD_PROJECT=project-id ./ops/cloud-run/deploy.sh
 
 The carrier is public so ActivityPub federation can reach its actor and inbox.
 Direct A2A, deployment, and invocation HTTP endpoints are not exposed. Mutation
-is admitted only after the `ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP,
-...)))` boundary is bound.
+is admitted only after the ActivityPub/CloudEvents/A2A boundary is bound.
 
 ## Declared service reconciliation
 

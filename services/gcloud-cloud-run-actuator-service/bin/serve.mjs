@@ -10,6 +10,6 @@ createServer(async (request, response) => {
   const path = new URL(request.url, base).pathname;
   if (request.method === "GET" && path === "/actor") return send(response, 200, { "@context": "https://www.w3.org/ns/activitystreams", id: `${base}/actor`, type: "Service", preferredUsername: "gcloud-cloud-run-actuator", inbox: `${base}/inbox`, outbox: `${base}/outbox`, "union:actor": ACTOR_ID });
   if (request.method === "GET" && path === "/outbox") return send(response, 200, { "@context": "https://www.w3.org/ns/activitystreams", id: `${base}/outbox`, type: "OrderedCollection", totalItems: 0, orderedItems: [] });
-  if (request.method === "POST" && path === "/inbox") return send(response, 503, { error: "ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...))) admission is not bound" });
+  if (request.method === "POST" && path === "/inbox") return send(response, 503, { error: "ActivityPub(CloudEvent(A2A)) admission is not bound" });
   return send(response, 404, { error: "not found" });
 }).listen(port, host, () => process.stderr.write(`GCloud Cloud Run Actuator ${ACTOR_ID} listening on ${host}:${port}\n`));

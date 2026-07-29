@@ -201,3 +201,8 @@ export async function actuate(input, options = {}) {
     default: throw new Error("unsupported GCloud actuator operation");
   }
 }
+
+export function agentCard(baseUrl) {
+  const base = new URL(baseUrl).href.replace(/\/$/u, "");
+  return { name: "GCloud Cloud Run Actuator", description: "Union actor for bounded, real Cloud Run operations through gcloud.", version: "1.0.0", protocolVersion: "1.0", url: `${base}/a2a`, preferredTransport: "JSONRPC", supportedInterfaces: [{ url: `${base}/a2a`, protocolBinding: "JSONRPC" }], provider: { organization: "Red Cup Engineering", url: base }, capabilities: { streaming: false, pushNotifications: false, extensions: [{ uri: "urn:ame:activitypub-jsonl-outbox", required: false }] }, skills: ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"].map((id) => ({ id, name: id, description: `Bounded ${id} operation.` })) };
+}
