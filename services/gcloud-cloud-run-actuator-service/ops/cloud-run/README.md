@@ -11,3 +11,13 @@ GOOGLE_CLOUD_PROJECT=project-id ACTUATOR_CAPABILITY_TOKEN=high-entropy-secret ./
 ```
 
 The carrier is public so federation discovery can reach it. Read-only discovery needs no secret. Deployment and invocation require the separately custodied high-entropy value in `X-Actuator-Capability`; it is not multiplexed into Cloud Run IAM's `Authorization` header.
+
+## Declared service reconciliation
+
+The bounded `reconcile-cloud-run-service` operation deploys the declared image,
+then makes the declared Cloud Run domain mapping converge: it leaves a matching
+mapping unchanged, creates a missing mapping, and refuses a mapping routed to a
+different service. The checked-in `content/desired-state/wuxian-gui.json`
+declares the current public `wuxian-gui` service, its required runtime
+configuration, and `gui.561.group` mapping without embedding a machine-local
+path.

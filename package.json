@@ -16,8 +16,8 @@
     "owner": "red-cup-engineering",
     "kind": "actor-member",
     "actor": "urn:ame:gcloud-services-section",
-    "operations": ["discover-cloud-run-service", "deploy-cloud-run-service", "invoke-cloud-run-service"],
-    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["discover", "deploy", "invoke"]}],
+    "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"],
+    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["discover", "domain-mapping", "deploy", "reconcile", "invoke"]}],
     "package": "@red-cup-engineering/gcloud-services-section"
   }
 }

@@ -1,0 +1,24 @@
+{
+  "operation": "reconcile-cloud-run-service",
+  "project": "five-six-one-group-dev",
+  "region": "us-central1",
+  "service": "wuxian-gui",
+  "domain": "gui.561.group",
+  "image": "us-central1-docker.pkg.dev/five-six-one-group-dev/cloud-run-source-deploy/wuxian-gui@sha256:34c7581c8b8cb31032b317a6378bebb7752067e3edcbc49e490f0032a69ec895",
+  "allowUnauthenticated": true,
+  "environment": {
+    "IAP_OPERATOR_EMAIL": "morgan.sennhauser@gmail.com",
+    "MUD_PUBLIC_PROJECTION": "true",
+    "MUD_CHAIN_READER_ORIGIN": "http://10.128.0.2:8562"
+  },
+  "concurrency": 4,
+  "cpu": "2",
+  "memory": "1Gi",
+  "serviceAccount": "1019481907460-compute@developer.gserviceaccount.com",
+  "network": "default",
+  "subnetwork": "default",
+  "vpcEgress": "private-ranges-only",
+  "timeoutSeconds": 300,
+  "maxInstances": 20,
+  "cloudflareDns": {"zone":"561.group","type":"CNAME","name":"gui.561.group","content":"ghs.googlehosted.com","proxied":false,"ttl":1}
+}

@@ -19,7 +19,7 @@ createServer(async (request, response) => {
   try {
     const rpc = await body(request); const input = rpc?.params?.input ?? rpc?.params;
     if (!input || typeof input !== "object") throw new Error("A2A request requires params.input");
-    if (input.operation !== "discover-cloud-run-service" && !authorized(request)) return send(response, 401, { jsonrpc: "2.0", id: rpc.id ?? null, error: { code: -32001, message: "mutating actuator operation requires X-Actuator-Capability" } });
+    if (!["discover-cloud-run-service", "discover-cloud-run-domain-mapping"].includes(input.operation) && !authorized(request)) return send(response, 401, { jsonrpc: "2.0", id: rpc.id ?? null, error: { code: -32001, message: "mutating actuator operation requires X-Actuator-Capability" } });
     const result = await actuate(input);
     return send(response, 200, { jsonrpc: "2.0", id: rpc.id ?? null, result: { id: result.receipt.id, status: { state: "completed" }, artifacts: [{ parts: [{ kind: "text", text: result.jsonl }] }] } });
   } catch (error) { return send(response, 400, { jsonrpc: "2.0", id: null, error: { code: -32000, message: error.message } }); }

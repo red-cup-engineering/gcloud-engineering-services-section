@@ -6,6 +6,8 @@ const SERVICE_NAME = /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u;
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/u;
 const REGION = /^[a-z]+-[a-z]+[0-9]$/u;
 const IMAGE = /^(?:[a-z0-9][a-z0-9._-]*\.)?[a-z0-9][a-z0-9._/-]*(?::[A-Za-z0-9._-]+|@sha256:[a-f0-9]{64})$/u;
+const DOMAIN = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/u;
+const SERVICE_ACCOUNT = /^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9-]+\.iam|developer)\.gserviceaccount\.com$/u;
 
 function requireString(value, name, expression) {
   if (typeof value !== "string" || !expression.test(value)) throw new Error(`invalid ${name}`);
@@ -18,7 +20,8 @@ function cloudTarget(input) {
     service: requireString(input.service, "Cloud Run service", SERVICE_NAME),
   };
 }
-function gcloud(args, { env = process.env, cwd } = {}) {
+function gcloud(args, { env = process.env, cwd, gcloud: execute } = {}) {
+  if (typeof execute === "function") return execute(args);
   const executable = env.GCLOUD_BIN ?? "gcloud";
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, { cwd, env: { ...env, CLOUDSDK_CORE_DISABLE_PROMPTS: "1" }, stdio: ["ignore", "pipe", "pipe"] });
@@ -41,6 +44,73 @@ function activity(operation, request, result) {
   const receipt = { "@context": "https://www.w3.org/ns/activitystreams", id, type: "Create", actor: ACTOR_ID, published: now, object: { type: "Activity", name: operation, content: result, attributedTo: ACTOR_ID }, "union:requestDigest": digest(JSON.stringify(request)) };
   return Object.freeze({ receipt, jsonl: `${JSON.stringify(receipt)}\n` });
 }
+function domainTarget(input) {
+  return { ...cloudTarget(input), domain: requireString(input.domain, "Cloud Run domain", DOMAIN) };
+}
+function mappingRoute(mapping) {
+  return mapping?.status?.mappedRouteName ?? mapping?.spec?.routeName ?? null;
+}
+function notFound(error) {
+  return /(?:NOT_FOUND|not found|does not exist)/iu.test(String(error?.message ?? error));
+}
+function requiredEnvironment(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid required environment");
+  const entries = Object.entries(value);
+  if (entries.length === 0 || entries.some(([name, entry]) => !/^[A-Z][A-Z0-9_]*$/u.test(name) || typeof entry !== "string" || entry.includes(","))) throw new Error("invalid required environment");
+  return Object.freeze(Object.fromEntries(entries));
+}
+function declaredServiceConfiguration(input) {
+  if (!Number.isInteger(input.concurrency) || input.concurrency < 1 || input.concurrency > 1000) throw new Error("invalid Cloud Run concurrency");
+  if (!Number.isInteger(input.timeoutSeconds) || input.timeoutSeconds < 1 || input.timeoutSeconds > 3600) throw new Error("invalid Cloud Run timeout");
+  if (!Number.isInteger(input.maxInstances) || input.maxInstances < 1 || input.maxInstances > 1000) throw new Error("invalid Cloud Run max instances");
+  return Object.freeze({
+    environment: requiredEnvironment(input.environment),
+    concurrency: input.concurrency,
+    cpu: requireString(input.cpu, "Cloud Run CPU", /^[1-9][0-9]*$/u),
+    memory: requireString(input.memory, "Cloud Run memory", /^[1-9][0-9]*(?:Mi|Gi)$/u),
+    serviceAccount: requireString(input.serviceAccount, "runtime service account", SERVICE_ACCOUNT),
+    network: requireString(input.network, "VPC network", /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u),
+    subnetwork: requireString(input.subnetwork, "VPC subnetwork", /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u),
+    vpcEgress: requireString(input.vpcEgress, "VPC egress", /^(?:private-ranges-only|all-traffic)$/u),
+    timeout: input.timeoutSeconds,
+    maxInstances: input.maxInstances,
+  });
+}
+function environmentValues(service) {
+  return Object.fromEntries((service?.spec?.template?.spec?.containers?.[0]?.env ?? []).filter((entry) => typeof entry?.name === "string" && typeof entry?.value === "string").map((entry) => [entry.name, entry.value]));
+}
+function networkInterface(service) {
+  const encoded = service?.spec?.template?.metadata?.annotations?.["run.googleapis.com/network-interfaces"];
+  try { const parsed = JSON.parse(encoded); return Array.isArray(parsed) ? parsed[0] ?? {} : {}; } catch { return {}; }
+}
+function serviceMatches(service, image, configuration) {
+  const template = service?.spec?.template;
+  const spec = template?.spec ?? {};
+  const container = spec.containers?.[0] ?? {};
+  const annotations = template?.metadata?.annotations ?? {};
+  const network = networkInterface(service);
+  return container.image === image
+    && spec.containerConcurrency === configuration.concurrency
+    && container.resources?.limits?.cpu === configuration.cpu
+    && container.resources?.limits?.memory === configuration.memory
+    && spec.serviceAccountName === configuration.serviceAccount
+    && spec.timeoutSeconds === configuration.timeout
+    && annotations["autoscaling.knative.dev/maxScale"] === String(configuration.maxInstances)
+    && annotations["run.googleapis.com/vpc-access-egress"] === configuration.vpcEgress
+    && network.network === configuration.network
+    && network.subnetwork === configuration.subnetwork
+    && Object.entries(configuration.environment).every(([name, value]) => environmentValues(service)[name] === value);
+}
+function allowsPublicInvocation(policy) {
+  return (policy?.bindings ?? []).some((binding) => binding?.role === "roles/run.invoker" && binding?.members?.includes("allUsers"));
+}
+
+export async function discoverCloudRunDomainMapping(input, options) {
+  const target = domainTarget(input);
+  const raw = await gcloud(["beta", "run", "domain-mappings", "describe", "--domain", target.domain, "--project", target.project, "--region", target.region, "--format=json"], options);
+  const mapping = JSON.parse(raw);
+  return activity("discover-cloud-run-domain-mapping", target, { mapping: target, routeName: mappingRoute(mapping), observed: mapping });
+}
 
 export async function discoverCloudRunService(input, options) {
   const target = cloudTarget(input);
@@ -55,10 +125,57 @@ export async function deployCloudRunService(input, options) {
   const args = ["run", "deploy", target.service, "--project", target.project, "--region", target.region, "--image", image, "--format=json", "--quiet"];
   if (input.allowUnauthenticated === true) args.push("--allow-unauthenticated");
   else args.push("--no-allow-unauthenticated");
-  if (input.serviceAccount !== undefined) args.push("--service-account", requireString(input.serviceAccount, "runtime service account", /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.iam\.gserviceaccount\.com$/u));
+  if (input.serviceAccount !== undefined) args.push("--service-account", requireString(input.serviceAccount, "runtime service account", SERVICE_ACCOUNT));
+  if (input.environment !== undefined) args.push("--update-env-vars", Object.entries(requiredEnvironment(input.environment)).map(([name, value]) => `${name}=${value}`).join(","));
+  if (input.concurrency !== undefined) args.push("--concurrency", String(input.concurrency));
+  if (input.cpu !== undefined) args.push("--cpu", requireString(input.cpu, "Cloud Run CPU", /^[1-9][0-9]*$/u));
+  if (input.memory !== undefined) args.push("--memory", requireString(input.memory, "Cloud Run memory", /^[1-9][0-9]*(?:Mi|Gi)$/u));
+  if (input.network !== undefined) args.push("--network", requireString(input.network, "VPC network", /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u));
+  if (input.subnetwork !== undefined) args.push("--subnet", requireString(input.subnetwork, "VPC subnetwork", /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u));
+  if (input.vpcEgress !== undefined) args.push("--vpc-egress", requireString(input.vpcEgress, "VPC egress", /^(?:private-ranges-only|all-traffic)$/u));
+  if (input.timeoutSeconds !== undefined) args.push("--timeout", String(input.timeoutSeconds));
+  if (input.maxInstances !== undefined) args.push("--max-instances", String(input.maxInstances));
   const raw = await gcloud(args, options);
   const service = JSON.parse(raw);
   return activity("deploy-cloud-run-service", { ...target, image, allowUnauthenticated: input.allowUnauthenticated === true }, { service: target, image, url: service?.status?.url ?? null, revision: service?.status?.latestReadyRevisionName ?? null, deployed: service });
+}
+
+export async function reconcileCloudRunService(input, options) {
+  const target = domainTarget(input);
+  const image = requireString(input.image, "container image", IMAGE);
+  const configuration = declaredServiceConfiguration(input);
+  const observedService = JSON.parse(await gcloud(["run", "services", "describe", target.service, "--project", target.project, "--region", target.region, "--format=json"], options));
+  const policy = JSON.parse(await gcloud(["run", "services", "get-iam-policy", target.service, "--project", target.project, "--region", target.region, "--format=json"], options));
+  let deployment = null;
+  let serviceAction = "unchanged";
+  if (!serviceMatches(observedService, image, configuration)) {
+    deployment = await deployCloudRunService({ ...input, ...target, image, ...configuration, allowUnauthenticated: true }, options);
+    serviceAction = "deployed";
+  }
+  let publicInvocationAction = "unchanged";
+  if (!allowsPublicInvocation(policy)) {
+    await gcloud(["run", "services", "add-iam-policy-binding", target.service, "--project", target.project, "--region", target.region, "--member", "allUsers", "--role", "roles/run.invoker", "--quiet"], options);
+    publicInvocationAction = "granted";
+  }
+  let mapping;
+  let mappingAction = "unchanged";
+  try {
+    mapping = JSON.parse(await gcloud(["beta", "run", "domain-mappings", "describe", "--domain", target.domain, "--project", target.project, "--region", target.region, "--format=json"], options));
+  } catch (error) {
+    if (!notFound(error)) throw error;
+    mapping = JSON.parse(await gcloud(["beta", "run", "domain-mappings", "create", "--domain", target.domain, "--service", target.service, "--project", target.project, "--region", target.region, "--format=json", "--quiet"], options));
+    mappingAction = "created";
+  }
+  const routeName = mappingRoute(mapping);
+  if (routeName !== target.service) throw new Error(`Cloud Run domain ${target.domain} is mapped to ${routeName ?? "an unknown service"}, not ${target.service}`);
+  return activity("reconcile-cloud-run-service", { ...target, image, allowUnauthenticated: true, ...configuration }, {
+    service: target,
+    image,
+    serviceAction,
+    publicInvocationAction,
+    deployment: deployment?.receipt.object.content ?? null,
+    domainMapping: { domain: target.domain, action: mappingAction, routeName, observed: mapping },
+  });
 }
 
 export async function invokeCloudRunService(input, options = {}) {
@@ -77,7 +194,9 @@ export async function actuate(input, options = {}) {
   if (!input || typeof input !== "object") throw new Error("actuator request must be an object");
   switch (input.operation) {
     case "discover-cloud-run-service": return await discoverCloudRunService(input, options);
+    case "discover-cloud-run-domain-mapping": return await discoverCloudRunDomainMapping(input, options);
     case "deploy-cloud-run-service": return await deployCloudRunService(input, options);
+    case "reconcile-cloud-run-service": return await reconcileCloudRunService(input, options);
     case "invoke-cloud-run-service": return await invokeCloudRunService(input, options);
     default: throw new Error("unsupported GCloud actuator operation");
   }
@@ -85,5 +204,5 @@ export async function actuate(input, options = {}) {
 
 export function agentCard(baseUrl) {
   const base = new URL(baseUrl).href.replace(/\/$/u, "");
-  return { name: "GCloud Cloud Run Actuator", description: "Union actor for bounded, real Cloud Run operations through gcloud.", version: "1.0.0", protocolVersion: "1.0", url: `${base}/a2a`, preferredTransport: "JSONRPC", supportedInterfaces: [{ url: `${base}/a2a`, protocolBinding: "JSONRPC" }], provider: { organization: "Red Cup Engineering", url: base }, capabilities: { streaming: false, pushNotifications: false, extensions: [{ uri: "urn:ame:activitypub-jsonl-outbox", required: false }] }, skills: ["discover-cloud-run-service", "deploy-cloud-run-service", "invoke-cloud-run-service"].map((id) => ({ id, name: id, description: `Bounded ${id} operation.` })) };
+  return { name: "GCloud Cloud Run Actuator", description: "Union actor for bounded, real Cloud Run operations through gcloud.", version: "1.0.0", protocolVersion: "1.0", url: `${base}/a2a`, preferredTransport: "JSONRPC", supportedInterfaces: [{ url: `${base}/a2a`, protocolBinding: "JSONRPC" }], provider: { organization: "Red Cup Engineering", url: base }, capabilities: { streaming: false, pushNotifications: false, extensions: [{ uri: "urn:ame:activitypub-jsonl-outbox", required: false }] }, skills: ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"].map((id) => ({ id, name: id, description: `Bounded ${id} operation.` })) };
 }

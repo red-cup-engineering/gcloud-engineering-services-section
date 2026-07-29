@@ -1,0 +1,69 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { reconcileCloudRunService } from "../src/gcloud-cloud-run-actuator.mjs";
+
+const input = Object.freeze({
+  project: "five-six-one-group-dev", region: "us-central1", service: "wuxian-gui", domain: "gui.561.group",
+  image: "us-central1-docker.pkg.dev/five-six-one-group-dev/cloud-run-source-deploy/wuxian-gui@sha256:34c7581c8b8cb31032b317a6378bebb7752067e3edcbc49e490f0032a69ec895",
+  allowUnauthenticated: true,
+  environment: { IAP_OPERATOR_EMAIL: "morgan.sennhauser@gmail.com", MUD_PUBLIC_PROJECTION: "true", MUD_CHAIN_READER_ORIGIN: "http://10.128.0.2:8562" },
+  concurrency: 4, cpu: "2", memory: "1Gi", serviceAccount: "1019481907460-compute@developer.gserviceaccount.com",
+  network: "default", subnetwork: "default", vpcEgress: "private-ranges-only", timeoutSeconds: 300, maxInstances: 20,
+});
+
+function service({ image = input.image } = {}) {
+  return JSON.stringify({ spec: { template: { metadata: { annotations: {
+    "autoscaling.knative.dev/maxScale": "20", "run.googleapis.com/vpc-access-egress": "private-ranges-only",
+    "run.googleapis.com/network-interfaces": "[{\"network\":\"default\",\"subnetwork\":\"default\"}]",
+  } }, spec: { containerConcurrency: 4, serviceAccountName: input.serviceAccount, timeoutSeconds: 300, containers: [{
+    image, resources: { limits: { cpu: "2", memory: "1Gi" } },
+    env: Object.entries(input.environment).map(([name, value]) => ({ name, value })),
+  }] } } } });
+}
+const publicPolicy = JSON.stringify({ bindings: [{ role: "roles/run.invoker", members: ["allUsers"] }] });
+const mapped = JSON.stringify({ spec: { routeName: "wuxian-gui" }, status: { mappedRouteName: "wuxian-gui" } });
+
+test("a fully matching public service and mapping produce no deployment or creation", async () => {
+  const calls = [];
+  const result = await reconcileCloudRunService(input, { gcloud: async (args) => {
+    calls.push(args);
+    if (args.join(" ").includes("services describe")) return service();
+    if (args.join(" ").includes("get-iam-policy")) return publicPolicy;
+    return mapped;
+  } });
+  assert.equal(calls.some((args) => args.join(" ").includes("run deploy")), false);
+  assert.equal(calls.some((args) => args.includes("create")), false);
+  assert.equal(calls.some((args) => args.includes("add-iam-policy-binding")), false);
+  assert.equal(result.receipt.object.content.serviceAction, "unchanged");
+  assert.equal(result.receipt.object.content.domainMapping.action, "unchanged");
+});
+
+test("drift deploys required configuration, grants public invocation, and creates only a missing mapping", async () => {
+  const calls = [];
+  let describes = 0;
+  const result = await reconcileCloudRunService(input, { gcloud: async (args) => {
+    calls.push(args);
+    const command = args.join(" ");
+    if (command.includes("services describe")) return service({ image: "example.invalid/old@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
+    if (command.includes("get-iam-policy")) return JSON.stringify({ bindings: [] });
+    if (command.includes("run deploy")) return JSON.stringify({ status: { url: "https://wuxian-gui.example", latestReadyRevisionName: "wuxian-gui-00007" } });
+    if (args.includes("describe") && describes++ === 0) throw new Error("NOT_FOUND");
+    return mapped;
+  } });
+  const deploy = calls.find((args) => args.join(" ").includes("run deploy"));
+  assert.ok(deploy);
+  for (const required of ["--allow-unauthenticated", "--update-env-vars", "--concurrency", "--cpu", "--memory", "--service-account", "--network", "--subnet", "--vpc-egress", "--timeout", "--max-instances"]) assert.equal(deploy.includes(required), true);
+  assert.equal(calls.some((args) => args.includes("add-iam-policy-binding") && args.includes("allUsers")), true);
+  assert.equal(calls.some((args) => args.includes("create") && args.includes("--service") && args.includes("wuxian-gui")), true);
+  assert.equal(result.receipt.object.content.serviceAction, "deployed");
+  assert.equal(result.receipt.object.content.publicInvocationAction, "granted");
+});
+
+test("a mapping belonging to another service refuses", async () => {
+  await assert.rejects(() => reconcileCloudRunService(input, { gcloud: async (args) => {
+    const command = args.join(" ");
+    if (command.includes("services describe")) return service();
+    if (command.includes("get-iam-policy")) return publicPolicy;
+    return JSON.stringify({ spec: { routeName: "other-service" } });
+  } }), /other-service/);
+});
