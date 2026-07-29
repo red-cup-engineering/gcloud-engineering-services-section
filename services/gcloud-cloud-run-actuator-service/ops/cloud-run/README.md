@@ -7,10 +7,12 @@ The actor carries no application database or object-store state. Every completed
 Prerequisites are a billing-enabled project and an Artifact Registry Docker repository named `union-actuators` (or `ARTIFACT_REPOSITORY`). Then run:
 
 ```bash
-GOOGLE_CLOUD_PROJECT=project-id ACTUATOR_CAPABILITY_TOKEN=high-entropy-secret ./ops/cloud-run/deploy.sh
+GOOGLE_CLOUD_PROJECT=project-id ./ops/cloud-run/deploy.sh
 ```
 
-The carrier is public so federation discovery can reach it. Read-only discovery needs no secret. Deployment and invocation require the separately custodied high-entropy value in `X-Actuator-Capability`; it is not multiplexed into Cloud Run IAM's `Authorization` header.
+The carrier is public so ActivityPub federation can reach its actor and inbox.
+Direct A2A, deployment, and invocation HTTP endpoints are not exposed. Mutation
+is admitted only after the ActivityPub/CloudEvents/A2A boundary is bound.
 
 ## Declared service reconciliation
 
