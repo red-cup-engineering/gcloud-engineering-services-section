@@ -21,5 +21,5 @@ if [[ -z "$url" ]]; then
   url=$(gcloud run services describe "$service" --project "$GOOGLE_CLOUD_PROJECT" --region "$region" --format='value(status.url)')
   gcloud run services update "$service" --project "$GOOGLE_CLOUD_PROJECT" --region "$region" --update-env-vars "BASE_URL=$url" --quiet
 fi
-curl --fail --silent --show-error "$url/.well-known/agent-card.json" >/dev/null
+curl --fail --silent --show-error "$url/actor" >/dev/null
 printf 'actor_url=%s\nactor=%s\n' "$url" "urn:ame:gcloud-cloud-run-actuator-service"
