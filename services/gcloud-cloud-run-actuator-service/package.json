@@ -13,14 +13,14 @@
     "organizational-kind": "autonomously-articulating-actor-member",
     "owners": ["gcloud-services-section"],
     "membrane": {"law": "src/", "lasting-instances": "content/", "append-only-instances": "data/"},
-    "admission": "a bounded Cloud Run operation addressed to this actor, with an authenticated bearer for deployment or invocation",
-    "refusal": "arbitrary gcloud arguments, commands outside Cloud Run, a missing deployment image, an invalid service name, missing authority for mutation, or any persistence request",
+    "admission": "a bounded Cloud Run operation addressed through ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))",
+    "refusal": "direct public A2A, an unwrapped operation, arbitrary gcloud arguments, commands outside Cloud Run, a missing deployment image, an invalid service name, missing authority for mutation, or any persistence request",
     "operation-catalog": {
-      "discover-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDiscoveryReceipt"},
-      "discover-cloud-run-domain-mapping": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDomainMappingDiscoveryReceipt"},
-      "deploy-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDeploymentReceipt"},
-      "reconcile-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunReconciliationReceipt"},
-      "invoke-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunInvocationReceipt"}
+      "discover-cloud-run-service": {"protocol": "ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))", "returns": "CloudRunDiscoveryReceipt"},
+      "discover-cloud-run-domain-mapping": {"protocol": "ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))", "returns": "CloudRunDomainMappingDiscoveryReceipt"},
+      "deploy-cloud-run-service": {"protocol": "ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))", "returns": "CloudRunDeploymentReceipt"},
+      "reconcile-cloud-run-service": {"protocol": "ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))", "returns": "CloudRunReconciliationReceipt"},
+      "invoke-cloud-run-service": {"protocol": "ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))", "returns": "CloudRunInvocationReceipt"}
     }
   },
   "x-semiotic-voxel": {
@@ -29,7 +29,7 @@
     "kind": "actor-member",
     "actor": "urn:ame:gcloud-cloud-run-actuator-service",
     "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"],
-    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["A2A", "ActivityPub", "CLI"]}],
+    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["ActivityPub(CloudEvent(A2A(UCAN, x402, CapTP, ...)))"]}],
     "package": "@red-cup-engineering/gcloud-cloud-run-actuator-service"
   }
 }
