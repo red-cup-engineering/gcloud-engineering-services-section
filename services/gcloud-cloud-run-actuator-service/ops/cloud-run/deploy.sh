@@ -12,8 +12,8 @@ image_tag=${IMAGE_TAG:-$(date -u +%Y%m%dT%H%M%SZ)}
 image="${region}-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/${repository}/${service}:${image_tag}"
 root=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 url=$(gcloud run services describe "$service" --project "$GOOGLE_CLOUD_PROJECT" --region "$region" --format='value(status.url)' 2>/dev/null || true)
-deploy_args=(run deploy "$service" --project "$GOOGLE_CLOUD_PROJECT" --region "$region" --image "$image" --allow-unauthenticated --remove-env-vars "ACTUATOR_CAPABILITY_TOKEN,ACTUATOR_BEARER_TOKEN" --quiet)
-if [[ -n "$url" ]]; then deploy_args+=(--set-env-vars "BASE_URL=$url"); fi
+deploy_args=(run deploy "$service" --project "$GOOGLE_CLOUD_PROJECT" --region "$region" --image "$image" --allow-unauthenticated --quiet)
+if [[ -n "$url" ]]; then deploy_args+=(--set-env-vars "BASE_URL=$url"); else deploy_args+=(--clear-env-vars); fi
 
 gcloud builds submit "$root" --project "$GOOGLE_CLOUD_PROJECT" --config "$root/ops/cloud-run/cloudbuild.yaml" --substitutions "_IMAGE=$image"
 gcloud "${deploy_args[@]}"
