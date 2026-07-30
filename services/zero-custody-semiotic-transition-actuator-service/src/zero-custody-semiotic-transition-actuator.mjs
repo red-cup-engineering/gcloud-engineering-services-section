@@ -58,6 +58,14 @@ function exchangeCall(transition) {
   const fragment = EXCHANGE.getFunction(transition.operation, args); if (!fragment) throw new TypeError("unknown SemioticExchange operation");
   return EXCHANGE.encodeFunctionData(fragment, args);
 }
+function admittedResourceReceipts(value) {
+  if (!Array.isArray(value) || value.length === 0) throw new TypeError("one or more measured resource receipts are required");
+  const receipts = value.map((receipt, index) => {
+    if (receipt === null || typeof receipt !== "object" || Array.isArray(receipt) || Object.keys(receipt).length === 0) throw new TypeError(`resourceReceipts[${index}] must be one nonempty receipt object`);
+    return structuredClone(receipt);
+  });
+  return Object.freeze(receipts);
+}
 function validateAuthorityReceipts({ ucanReceipt, bindingReceipt, resource, operation, rmnSemanticDigest }) {
   const did = DID_PKH.exec(resource); if (!did) throw new TypeError("resource must be did:pkh:eip155:<chainId>:<address>");
   if (ucanReceipt?.type !== "UcanInvocationVerificationReceipt" || ucanReceipt.version !== 1
@@ -125,8 +133,9 @@ export function createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUr
   const authorization = createUserOperationAuthorizationPolicy({ chainId: Number(did[1]), account: address(policy.account, "policy account"), contracts: [address(policy.account, "policy account")], maxSignatures: policy.maxSignatures ?? 1 });
   return Object.freeze({
     custody: "none", funds: "none", persistence: "none",
-    async transition({ authority, rmnSemanticDigest, transition: move }) {
+    async transition({ authority, resourceReceipts, rmnSemanticDigest, transition: move }) {
       const calldata = exchangeCall(move); const digest = bytes32(rmnSemanticDigest, "RMN semantic digest");
+      const measuredResources = admittedResourceReceipts(resourceReceipts);
       const admitted = await admitAuthority(Object.freeze({ ...authority, resource,
         operation: move.operation, rmnSemanticDigest: digest }));
       const admittedAuthority = validateAuthorityReceipts({ ucanReceipt: admitted?.ucanReceipt,
@@ -140,7 +149,7 @@ export function createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUr
         if (String(effectDigest).toLowerCase() !== digest || calls.length !== 1 || address(calls[0].target, "RMN call target") !== exchangeAddress || BigInt(calls[0].value) !== 0n || !allowedSelectors.has(selector(calls[0].data))) throw new Error("SXC-M7 policy refuses the bounded SemioticExchange call");
         return authorization.authorize({ chainId, contract: account, userOperation: { sender: operation.sender, nonce: operation.nonce, call_data: operation.callData, call_gas_limit: operation.callGasLimit, verification_gas_limit: operation.verificationGasLimit, pre_verification_gas: operation.preVerificationGas, max_fee_per_gas: operation.maxFeePerGas, max_priority_fee_per_gas: operation.maxPriorityFeePerGas, paymaster: operation.paymaster ?? "0x", paymaster_data: operation.paymasterData ?? "0x", ...(operation.paymasterVerificationGasLimit ? { paymaster_verification_gas_limit: operation.paymasterVerificationGasLimit } : {}), ...(operation.paymasterPostOpGasLimit ? { paymaster_post_op_gas_limit: operation.paymasterPostOpGasLimit } : {}) } });
       } });
-      const event = { specversion: "1.0", cloudEventType: "org.emsenn.sxc.transition.settled.v1", source: ACTOR_ID, id: `ni:///sha-256;${createHash("sha256").update(json({ digest, userOpHash: receipt.userOpHash, transactionHash: receipt.transactionHash })).digest("base64url")}`, subject: resource, data: { protocol: "A2A/RMN/UCAN/ERC-1271/ERC-4337/ERC-7677", authority: admittedAuthority, rmnSemanticDigest: digest, transition: move.operation, selector: selector(calldata), receipt } };
+      const event = { specversion: "1.0", cloudEventType: "org.emsenn.sxc.transition.settled.v1", source: ACTOR_ID, id: `ni:///sha-256;${createHash("sha256").update(json({ digest, resourceReceipts: measuredResources, userOpHash: receipt.userOpHash, transactionHash: receipt.transactionHash })).digest("base64url")}`, subject: resource, data: { protocol: "A2A/RMN/UCAN/ERC-1271/ERC-4337/ERC-7677", authority: admittedAuthority, rmnSemanticDigest: digest, resourceReceipts: measuredResources, transition: move.operation, selector: selector(calldata), receipt } };
       return Object.freeze({ "@context": "https://www.w3.org/ns/activitystreams", type: "Create", actor: ACTOR_ID, object: { type: "CloudEvent", ...event } });
     },
   });
