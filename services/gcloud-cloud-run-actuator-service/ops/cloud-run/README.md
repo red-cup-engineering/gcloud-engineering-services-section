@@ -1,18 +1,9 @@
-# GCloud Cloud Run Actuator carrier
+# GCloud Cloud Run Actuator control plane
 
-This deploys the actuator as a publicly reachable Cloud Run actor. Its agent card is at `/.well-known/agent-card.json`, its ActivityPub service identity at `/actor`, and its A2A JSON-RPC interface at `/a2a`.
-
-The actor carries no application database or object-store state. Every completed operation returns one JSONL Activity receipt for federation. Shared economic/ordering commitments can be anchored separately on `eip155:5615610`.
-
-Prerequisites are a billing-enabled project and an Artifact Registry Docker repository named `union-actuators` (or `ARTIFACT_REPOSITORY`). Then run:
-
-```bash
-GOOGLE_CLOUD_PROJECT=project-id ./ops/cloud-run/deploy.sh
-```
-
-The carrier is public so ActivityPub federation can reach its actor and inbox.
-Direct A2A, deployment, and invocation HTTP endpoints are not exposed. Mutation
-is admitted only after the ActivityPub/CloudEvents/A2A boundary is bound.
+This package exposes only a local CLI and library API for bounded `gcloud` Cloud
+Run operations. It does not advertise or operate an ActivityPub, A2A, or HTTP
+control-plane interface. Historical carrier files remain for provenance; they
+are not an activation path.
 
 ## Declared service reconciliation
 
@@ -23,3 +14,20 @@ different service. The checked-in `content/desired-state/wuxian-gui.json`
 declares the current public `wuxian-gui` service, its required runtime
 configuration, and `gui.561.group` mapping without embedding a machine-local
 path.
+
+## Deployment boundary
+
+This actor owns generic cloud execution, so deployment controls belong in this
+service rather than a consumer's laptop script. `deploy-cloud-run-service`
+accepts only an image pinned by `@sha256:` and always stages it with
+`--no-traffic`; `cutover-cloud-run-service` is the separate, explicit 100%
+traffic operation. A consumer establishes its canonical HTTPS actor origin
+before asking for cutover: this operation reads the named staged revision and refuses
+unless its required `serving.knative.dev/service` label identifies that service
+and its `BASE_URL` and
+`ACTIVITYPUB_ORIGIN` equal that exact origin.
+
+Managed task scheduling belongs to
+`gcloud-runtime-authorities-service`, which owns its authenticated Cloud Tasks
+adapter and immutable-custody boundary. Cloud Run Jobs remain diagnostic and
+repair tools, not normal delivery workers.

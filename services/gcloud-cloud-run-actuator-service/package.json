@@ -3,33 +3,32 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A network-addressable actor that executes bounded Google Cloud Run operations through the installed Google Cloud SDK.",
+  "description": "A local CLI and library control-plane for bounded Google Cloud Run operations through the installed Google Cloud SDK.",
   "exports": {".": "./src/gcloud-cloud-run-actuator.mjs"},
-  "bin": {"gcloud-cloud-run-actuator": "./bin/gcloud-cloud-run-actuator.mjs", "serve-gcloud-cloud-run-actuator": "./bin/serve.mjs"},
-  "scripts": {"check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check bin/gcloud-cloud-run-actuator.mjs && node --check bin/serve.mjs", "test": "node --test test/*.test.mjs"},
+  "bin": {"gcloud-cloud-run-actuator": "./bin/gcloud-cloud-run-actuator.mjs"},
+  "scripts": {"check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check bin/gcloud-cloud-run-actuator.mjs", "test": "node --test test/*.test.mjs"},
   "x-agentic-metro-enterprise": {
     "node-id": "gcloud-cloud-run-actuator-service",
-    "actor": "urn:ame:gcloud-cloud-run-actuator-service",
     "organizational-kind": "autonomously-articulating-actor-member",
     "owners": ["gcloud-services-section"],
     "membrane": {"law": "src/", "lasting-instances": "content/", "append-only-instances": "data/"},
-    "admission": "a bounded Cloud Run operation addressed to this actor, with an authenticated bearer for deployment or invocation",
+    "admission": "one bounded Cloud Run control-plane request supplied through this package's CLI or library API",
     "refusal": "arbitrary gcloud arguments, commands outside Cloud Run, a missing deployment image, an invalid service name, missing authority for mutation, or any persistence request",
     "operation-catalog": {
-      "discover-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDiscoveryReceipt"},
-      "discover-cloud-run-domain-mapping": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDomainMappingDiscoveryReceipt"},
-      "deploy-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunDeploymentReceipt"},
-      "reconcile-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunReconciliationReceipt"},
-      "invoke-cloud-run-service": {"protocol": "A2A 1.0 JSON-RPC", "returns": "CloudRunInvocationReceipt"}
+      "discover-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunDiscoveryReceipt"},
+      "discover-cloud-run-domain-mapping": {"protocol": "CLI/library", "returns": "CloudRunDomainMappingDiscoveryReceipt"},
+      "deploy-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunDeploymentReceipt"},
+      "cutover-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunCutoverReceipt"},
+      "reconcile-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunReconciliationReceipt"},
+      "invoke-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunInvocationReceipt"}
     }
   },
   "x-semiotic-voxel": {
     "profile": "org.harmonious-union.semiotic-voxel.v1",
     "owner": "red-cup-engineering",
     "kind": "capability-cell",
-    "actor": "urn:ame:gcloud-cloud-run-actuator-service",
-    "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"],
-    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["A2A", "ActivityPub", "CLI"]}],
+    "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"],
+    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["CLI", "library"]}],
     "package": "@red-cup-engineering/gcloud-cloud-run-actuator-service"
   }
 }

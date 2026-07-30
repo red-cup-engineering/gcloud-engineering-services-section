@@ -6,8 +6,11 @@ const SERVICE_NAME = /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u;
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/u;
 const REGION = /^[a-z]+-[a-z]+[0-9]$/u;
 const IMAGE = /^(?:[a-z0-9][a-z0-9._-]*\.)?[a-z0-9][a-z0-9._/-]*(?::[A-Za-z0-9._-]+|@sha256:[a-f0-9]{64})$/u;
+const DIGEST_IMAGE = /@sha256:[a-f0-9]{64}$/u;
 const DOMAIN = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/u;
 const SERVICE_ACCOUNT = /^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9-]+\.iam|developer)\.gserviceaccount\.com$/u;
+const REVISION = /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u;
+const REVISION_TAG = /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u;
 
 function requireString(value, name, expression) {
   if (typeof value !== "string" || !expression.test(value)) throw new Error(`invalid ${name}`);
@@ -19,6 +22,17 @@ function cloudTarget(input) {
     region: requireString(input.region, "Cloud Run region", REGION),
     service: requireString(input.service, "Cloud Run service", SERVICE_NAME),
   };
+}
+function immutableImage(value) {
+  const image = requireString(value, "container image", IMAGE);
+  if (!DIGEST_IMAGE.test(image)) throw new Error("container image must be pinned by sha256 digest");
+  return image;
+}
+function canonicalOrigin(value) {
+  let origin;
+  try { origin = new URL(value); } catch { throw new Error("invalid canonical actor origin"); }
+  if (origin.protocol !== "https:" || origin.pathname !== "/" || origin.search || origin.hash || origin.username || origin.password) throw new Error("canonical actor origin must be an HTTPS origin without a path");
+  return origin.origin;
 }
 function gcloud(args, { env = process.env, cwd, gcloud: execute } = {}) {
   if (typeof execute === "function") return execute(args);
@@ -59,6 +73,16 @@ function requiredEnvironment(value) {
   if (entries.length === 0 || entries.some(([name, entry]) => !/^[A-Z][A-Z0-9_]*$/u.test(name) || typeof entry !== "string" || entry.includes(","))) throw new Error("invalid required environment");
   return Object.freeze(Object.fromEntries(entries));
 }
+function requiredSecretBindings(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid Secret Manager bindings");
+  const entries = Object.entries(value);
+  if (entries.length === 0 || entries.some(([target, secret]) => {
+    const environment = /^[A-Z][A-Z0-9_]*$/u.test(target);
+    const mount = /^\/secrets\/[a-z0-9][a-z0-9._/-]*$/u.test(target) && !target.includes("//") && !target.endsWith("/");
+    return (!environment && !mount) || typeof secret !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,254}:(?:latest|[1-9][0-9]*)$/u.test(secret);
+  })) throw new Error("invalid Secret Manager bindings");
+  return Object.freeze(Object.fromEntries(entries));
+}
 function declaredServiceConfiguration(input) {
   if (!Number.isInteger(input.concurrency) || input.concurrency < 1 || input.concurrency > 1000) throw new Error("invalid Cloud Run concurrency");
   if (!Number.isInteger(input.timeoutSeconds) || input.timeoutSeconds < 1 || input.timeoutSeconds > 3600) throw new Error("invalid Cloud Run timeout");
@@ -78,6 +102,15 @@ function declaredServiceConfiguration(input) {
 }
 function environmentValues(service) {
   return Object.fromEntries((service?.spec?.template?.spec?.containers?.[0]?.env ?? []).filter((entry) => typeof entry?.name === "string" && typeof entry?.value === "string").map((entry) => [entry.name, entry.value]));
+}
+function revisionEnvironmentValues(revision) {
+  return Object.fromEntries((revision?.spec?.containers?.[0]?.env ?? []).filter((entry) => typeof entry?.name === "string" && typeof entry?.value === "string").map((entry) => [entry.name, entry.value]));
+}
+function revisionBelongsToService(revision, service, revisionName) {
+  const metadata = revision?.metadata ?? {};
+  if (typeof metadata.name === "string" && metadata.name !== revisionName) return false;
+  const labels = metadata.labels ?? {};
+  return labels["serving.knative.dev/service"] === service;
 }
 function networkInterface(service) {
   const encoded = service?.spec?.template?.metadata?.annotations?.["run.googleapis.com/network-interfaces"];
@@ -121,12 +154,15 @@ export async function discoverCloudRunService(input, options) {
 
 export async function deployCloudRunService(input, options) {
   const target = cloudTarget(input);
-  const image = requireString(input.image, "container image", IMAGE);
-  const args = ["run", "deploy", target.service, "--project", target.project, "--region", target.region, "--image", image, "--format=json", "--quiet"];
+  const image = immutableImage(input.image);
+  const args = ["run", "deploy", target.service, "--project", target.project, "--region", target.region, "--image", image, "--no-traffic", "--format=json", "--quiet"];
+  const revisionTag = input.revisionTag === undefined ? undefined : requireString(input.revisionTag, "staged revision tag", REVISION_TAG);
+  if (revisionTag !== undefined) args.push("--tag", revisionTag);
   if (input.allowUnauthenticated === true) args.push("--allow-unauthenticated");
   else args.push("--no-allow-unauthenticated");
   if (input.serviceAccount !== undefined) args.push("--service-account", requireString(input.serviceAccount, "runtime service account", SERVICE_ACCOUNT));
   if (input.environment !== undefined) args.push("--update-env-vars", Object.entries(requiredEnvironment(input.environment)).map(([name, value]) => `${name}=${value}`).join(","));
+  if (input.secretBindings !== undefined) args.push("--update-secrets", Object.entries(requiredSecretBindings(input.secretBindings)).map(([target, secret]) => `${target}=${secret}`).join(","));
   if (input.concurrency !== undefined) args.push("--concurrency", String(input.concurrency));
   if (input.cpu !== undefined) args.push("--cpu", requireString(input.cpu, "Cloud Run CPU", /^[1-9][0-9]*$/u));
   if (input.memory !== undefined) args.push("--memory", requireString(input.memory, "Cloud Run memory", /^[1-9][0-9]*(?:Mi|Gi)$/u));
@@ -137,12 +173,32 @@ export async function deployCloudRunService(input, options) {
   if (input.maxInstances !== undefined) args.push("--max-instances", String(input.maxInstances));
   const raw = await gcloud(args, options);
   const service = JSON.parse(raw);
-  return activity("deploy-cloud-run-service", { ...target, image, allowUnauthenticated: input.allowUnauthenticated === true }, { service: target, image, url: service?.status?.url ?? null, revision: service?.status?.latestReadyRevisionName ?? null, deployed: service });
+  const revision = service?.status?.latestReadyRevisionName ?? null;
+  const tagged = revisionTag === undefined ? null : (service?.status?.traffic ?? []).find((entry) => entry?.tag === revisionTag && (revision === null || entry?.revisionName === revision));
+  return activity("stage-cloud-run-service", { ...target, image, allowUnauthenticated: input.allowUnauthenticated === true, ...(revisionTag === undefined ? {} : { revisionTag }) }, { service: target, image, traffic: "none", revisionTag: revisionTag ?? null, tagUrl: tagged?.url ?? null, url: service?.status?.url ?? null, revision, deployed: service });
+}
+
+// Activation is deliberately a second, named operation.  A successful build
+// or ready revision cannot accidentally become production traffic as a side
+// effect of staging it.
+export async function cutoverCloudRunService(input, options) {
+  const target = cloudTarget(input);
+  const revision = requireString(input.revision, "Cloud Run revision", REVISION);
+  const origin = canonicalOrigin(input.canonicalOrigin);
+  const described = JSON.parse(await gcloud(["run", "revisions", "describe", revision, "--project", target.project, "--region", target.region, "--format=json"], options));
+  if (!revisionBelongsToService(described, target.service, revision)) throw new Error("named Cloud Run revision is not owned by the requested service");
+  const environment = revisionEnvironmentValues(described);
+  if (environment.BASE_URL !== origin || environment.ACTIVITYPUB_ORIGIN !== origin) {
+    throw new Error("named Cloud Run revision does not hold the declared canonical actor origin before cutover");
+  }
+  const raw = await gcloud(["run", "services", "update-traffic", target.service, "--project", target.project, "--region", target.region, "--to-revisions", `${revision}=100`, "--format=json", "--quiet"], options);
+  const service = JSON.parse(raw);
+  return activity("cutover-cloud-run-service", { ...target, revision, canonicalOrigin: origin }, { service: target, revision, canonicalOrigin: origin, traffic: 100, url: service?.status?.url ?? null, activated: service });
 }
 
 export async function reconcileCloudRunService(input, options) {
   const target = domainTarget(input);
-  const image = requireString(input.image, "container image", IMAGE);
+  const image = immutableImage(input.image);
   const configuration = declaredServiceConfiguration(input);
   const observedService = JSON.parse(await gcloud(["run", "services", "describe", target.service, "--project", target.project, "--region", target.region, "--format=json"], options));
   const policy = JSON.parse(await gcloud(["run", "services", "get-iam-policy", target.service, "--project", target.project, "--region", target.region, "--format=json"], options));
@@ -196,13 +252,13 @@ export async function actuate(input, options = {}) {
     case "discover-cloud-run-service": return await discoverCloudRunService(input, options);
     case "discover-cloud-run-domain-mapping": return await discoverCloudRunDomainMapping(input, options);
     case "deploy-cloud-run-service": return await deployCloudRunService(input, options);
+    case "cutover-cloud-run-service": return await cutoverCloudRunService(input, options);
     case "reconcile-cloud-run-service": return await reconcileCloudRunService(input, options);
     case "invoke-cloud-run-service": return await invokeCloudRunService(input, options);
     default: throw new Error("unsupported GCloud actuator operation");
   }
 }
 
-export function agentCard(baseUrl) {
-  const base = new URL(baseUrl).href.replace(/\/$/u, "");
-  return { name: "GCloud Cloud Run Actuator", description: "Union actor for bounded, real Cloud Run operations through gcloud.", version: "1.0.0", protocolVersion: "1.0", url: `${base}/a2a`, preferredTransport: "JSONRPC", supportedInterfaces: [{ url: `${base}/a2a`, protocolBinding: "JSONRPC" }], provider: { organization: "Red Cup Engineering", url: base }, capabilities: { streaming: false, pushNotifications: false, extensions: [{ uri: "urn:ame:activitypub-jsonl-outbox", required: false }] }, skills: ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"].map((id) => ({ id, name: id, description: `Bounded ${id} operation.` })) };
+export function controlPlaneDescriptor() {
+  return Object.freeze({ name: "GCloud Cloud Run Actuator", description: "Local CLI and library control-plane for bounded Google Cloud Run operations.", operations: ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"] });
 }

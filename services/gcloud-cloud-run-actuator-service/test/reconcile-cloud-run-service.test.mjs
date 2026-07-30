@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { reconcileCloudRunService } from "../src/gcloud-cloud-run-actuator.mjs";
+import { cutoverCloudRunService, deployCloudRunService, reconcileCloudRunService } from "../src/gcloud-cloud-run-actuator.mjs";
 
 const input = Object.freeze({
   project: "five-six-one-group-dev", region: "us-central1", service: "wuxian-gui", domain: "gui.561.group",
@@ -66,4 +66,59 @@ test("a mapping belonging to another service refuses", async () => {
     if (command.includes("get-iam-policy")) return publicPolicy;
     return JSON.stringify({ spec: { routeName: "other-service" } });
   } }), /other-service/);
+});
+
+test("deployment only stages a digest-pinned image with no traffic", async () => {
+  const calls = [];
+  await deployCloudRunService({ ...input }, { gcloud: async (args) => {
+    calls.push(args);
+    return JSON.stringify({ status: { latestReadyRevisionName: "wuxian-gui-00008" } });
+  } });
+  assert.equal(calls[0].includes("--no-traffic"), true);
+  assert.equal(calls[0].some((arg) => arg === "--to-latest" || arg.startsWith("--to-revisions")), false);
+  await assert.rejects(() => deployCloudRunService({ ...input, image: "example.com/wuxian-gui:latest" }, { gcloud: async () => "{}" }), /pinned by sha256 digest/);
+});
+
+test("staging admits only bounded Secret Manager environment and mount bindings", async () => {
+  const calls = [];
+  await deployCloudRunService({ ...input, secretBindings: {
+    GITHUB_SERVICES_TOKEN: "github-software-induction-token:latest",
+    "/secrets/activitypub/keys.json": "github-software-induction-activitypub-keys:3",
+  } }, { gcloud: async (args) => { calls.push(args); return "{}"; } });
+  const bindings = calls[0][calls[0].indexOf("--update-secrets") + 1];
+  assert.match(bindings, /GITHUB_SERVICES_TOKEN=github-software-induction-token:latest/u);
+  assert.match(bindings, /\/secrets\/activitypub\/keys\.json=github-software-induction-activitypub-keys:3/u);
+  await assert.rejects(() => deployCloudRunService({ ...input, secretBindings: { "/tmp/key": "secret:latest" } }, { gcloud: async () => "{}" }), /Secret Manager bindings/);
+});
+
+test("cutover is explicit after the named revision establishes its canonical origin", async () => {
+  const calls = [];
+  const origin = "https://github-software-induction.example";
+  await cutoverCloudRunService({ project: input.project, region: input.region, service: input.service, revision: "wuxian-gui-00008", canonicalOrigin: origin }, { gcloud: async (args) => {
+    calls.push(args);
+    if (args.join(" ").includes("revisions describe")) return JSON.stringify({ metadata: { name: "wuxian-gui-00008", labels: { "serving.knative.dev/service": input.service } }, spec: { containers: [{ env: [{ name: "BASE_URL", value: origin }, { name: "ACTIVITYPUB_ORIGIN", value: origin }] }] } });
+    return "{}";
+  } });
+  const cutover = calls[1];
+  assert.deepEqual(cutover.slice(-4), ["--to-revisions", "wuxian-gui-00008=100", "--format=json", "--quiet"]);
+});
+
+test("cutover refuses before traffic when the canonical actor origin is absent", async () => {
+  const calls = [];
+  await assert.rejects(() => cutoverCloudRunService({
+    project: input.project, region: input.region, service: input.service, revision: "wuxian-gui-00008", canonicalOrigin: "https://github-software-induction.example",
+  }, { gcloud: async (args) => { calls.push(args); return JSON.stringify({ metadata: { name: "wuxian-gui-00008", labels: { "serving.knative.dev/service": input.service } }, spec: { containers: [{ env: [] }] } }); } }), /canonical actor origin/);
+  assert.equal(calls.some((args) => args.includes("update-traffic")), false);
+});
+
+test("cutover refuses a revision owned by another service", async () => {
+  await assert.rejects(() => cutoverCloudRunService({
+    project: input.project, region: input.region, service: input.service, revision: "wuxian-gui-00008", canonicalOrigin: "https://github-software-induction.example",
+  }, { gcloud: async () => JSON.stringify({ metadata: { name: "wuxian-gui-00008", labels: { "serving.knative.dev/service": "other-service" } }, spec: { containers: [{ env: [] }] } }) }), /not owned/);
+});
+
+test("cutover requires the exact serving-service ownership label", async () => {
+  await assert.rejects(() => cutoverCloudRunService({
+    project: input.project, region: input.region, service: input.service, revision: "wuxian-gui-00008", canonicalOrigin: "https://github-software-induction.example",
+  }, { gcloud: async () => JSON.stringify({ metadata: { name: "wuxian-gui-00008", labels: {} }, spec: { containers: [{ env: [] }] } }) }), /not owned/);
 });

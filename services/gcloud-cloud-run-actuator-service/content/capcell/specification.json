@@ -1,10 +1,9 @@
 {
   "name": "gcloud-cloud-run-actuator",
-  "description": "An installed Google Cloud SDK exposed as one bounded, receipt-producing Union actor.",
+  "description": "An installed Google Cloud SDK exposed as one bounded local CLI and library control plane.",
   "package": {"name": "@red-cup-engineering/gcloud-cloud-run-actuator-service", "version": "1.0.0", "entrypoint": "./src/gcloud-cloud-run-actuator.mjs"},
-  "actor": "urn:ame:gcloud-cloud-run-actuator-service",
-  "agentCard": "content/agent-card/agent-card.template.json",
-  "operations": ["discover-cloud-run-service", "deploy-cloud-run-service", "invoke-cloud-run-service"],
-  "dataCarrier": "signed JSONL Activities delivered through the actor outbox; only shared commitments belong on eip155:5615610",
+  "operations": ["discover-cloud-run-service", "deploy-cloud-run-service", "cutover-cloud-run-service", "invoke-cloud-run-service"],
+  "interfaces": ["CLI", "library"],
+  "dataCarrier": "local JSONL command receipts; network publication belongs to its owning provider service",
   "persistence": "none"
 }
