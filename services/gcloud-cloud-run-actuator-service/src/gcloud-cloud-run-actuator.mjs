@@ -27,6 +27,9 @@ function cloudTarget(input) {
     service: requireString(input.service, "Cloud Run service", SERVICE_NAME),
   };
 }
+function jobTarget(input) {
+  return { project: requireString(input.project, "Google Cloud project", PROJECT_ID), region: requireString(input.region, "Cloud Run region", REGION), job: requireString(input.job, "Cloud Run job", SERVICE_NAME) };
+}
 function stagedRevisionTag(target, value) {
   const tag = requireString(value, "staged revision tag", REVISION_TAG);
   if (target.service.length + tag.length > CLOUD_RUN_TAGGED_ROUTE_LIMITS.maxServiceAndTagCharacters) {
@@ -110,6 +113,49 @@ function declaredServiceConfiguration(input) {
     timeout: input.timeoutSeconds,
     maxInstances: input.maxInstances,
   });
+}
+function declaredJobConfiguration(input) {
+  const base = declaredServiceConfiguration({ ...input, concurrency: 1, maxInstances: 1 });
+  if (!Number.isInteger(input.tasks) || input.tasks < 1 || input.tasks > 10000) throw new Error("invalid Cloud Run Job tasks");
+  if (!Number.isInteger(input.parallelism) || input.parallelism < 1 || input.parallelism > input.tasks) throw new Error("invalid Cloud Run Job parallelism");
+  if (!Number.isInteger(input.maxRetries) || input.maxRetries < 0 || input.maxRetries > 10) throw new Error("invalid Cloud Run Job max retries");
+  if (input.timeoutSeconds > 86400) throw new Error("invalid Cloud Run Job timeout");
+  return Object.freeze({ ...base, tasks: input.tasks, parallelism: input.parallelism, maxRetries: input.maxRetries });
+}
+function jobMatches(job, image, configuration) {
+  const template = job?.spec?.template?.spec ?? job?.spec?.template ?? {};
+  const container = template.containers?.[0] ?? {};
+  const network = job?.spec?.template?.metadata?.annotations?.["run.googleapis.com/network-interfaces"];
+  return container.image === image && template.serviceAccountName === configuration.serviceAccount && template.timeoutSeconds === configuration.timeout
+    && container.resources?.limits?.cpu === configuration.cpu && container.resources?.limits?.memory === configuration.memory
+    && job?.spec?.parallelism === configuration.parallelism && job?.spec?.taskCount === configuration.tasks && job?.spec?.template?.spec?.maxRetries === configuration.maxRetries
+    && Object.entries(configuration.environment).every(([name, value]) => environmentValues({ spec: { template: { spec: template } } })[name] === value)
+    && typeof network === "string" && network.includes(configuration.network) && network.includes(configuration.subnetwork);
+}
+
+export async function discoverCloudRunJob(input, options) {
+  const target = jobTarget(input);
+  const observed = JSON.parse(await gcloud(["run", "jobs", "describe", target.job, "--project", target.project, "--region", target.region, "--format=json"], options));
+  return activity("discover-cloud-run-job", target, { job: target, observed });
+}
+export async function deployCloudRunJob(input, options) {
+  const target = jobTarget(input); const image = immutableImage(input.image); const configuration = declaredJobConfiguration(input);
+  const args = ["run", "jobs", "deploy", target.job, "--project", target.project, "--region", target.region, "--image", image, "--service-account", configuration.serviceAccount, "--network", configuration.network, "--subnet", configuration.subnetwork, "--vpc-egress", configuration.vpcEgress, "--cpu", configuration.cpu, "--memory", configuration.memory, "--task-timeout", String(configuration.timeout), "--tasks", String(configuration.tasks), "--parallelism", String(configuration.parallelism), "--max-retries", String(configuration.maxRetries), "--set-env-vars", Object.entries(configuration.environment).map(([name, value]) => `${name}=${value}`).join(","), "--set-secrets", Object.entries(requiredSecretBindings(input.secretBindings)).map(([name, value]) => `${name}=${value}`).join(","), "--format=json", "--quiet"];
+  const deployed = JSON.parse(await gcloud(args, options));
+  return activity("deploy-cloud-run-job", { ...target, image, ...configuration, secretBindings: requiredSecretBindings(input.secretBindings) }, { job: target, image, deployed });
+}
+export async function reconcileCloudRunJob(input, options) {
+  const target = jobTarget(input); const image = immutableImage(input.image); const configuration = declaredJobConfiguration(input); let observed;
+  try { observed = JSON.parse(await gcloud(["run", "jobs", "describe", target.job, "--project", target.project, "--region", target.region, "--format=json"], options)); } catch (error) { if (!notFound(error)) throw error; observed = null; }
+  const deployment = !observed || !jobMatches(observed, image, configuration) ? await deployCloudRunJob(input, options) : null;
+  return activity("reconcile-cloud-run-job", { ...target, image, ...configuration, secretBindings: requiredSecretBindings(input.secretBindings) }, { job: target, image, action: deployment ? "deployed" : "unchanged", deployment: deployment?.receipt.object.content ?? null });
+}
+export async function executeCloudRunJob(input, options) {
+  const target = jobTarget(input); const overrides = input.environmentOverrides === undefined ? {} : requiredEnvironment(input.environmentOverrides);
+  const args = ["run", "jobs", "execute", target.job, "--project", target.project, "--region", target.region, "--format=json", "--quiet"];
+  if (Object.keys(overrides).length) args.push("--update-env-vars", Object.entries(overrides).map(([name, value]) => `${name}=${value}`).join(","));
+  const execution = JSON.parse(await gcloud(args, options));
+  return activity("execute-cloud-run-job", { ...target, environmentOverrides: overrides }, { job: target, execution });
 }
 function environmentValues(service) {
   return Object.fromEntries((service?.spec?.template?.spec?.containers?.[0]?.env ?? []).filter((entry) => typeof entry?.name === "string" && typeof entry?.value === "string").map((entry) => [entry.name, entry.value]));
@@ -266,10 +312,14 @@ export async function actuate(input, options = {}) {
     case "cutover-cloud-run-service": return await cutoverCloudRunService(input, options);
     case "reconcile-cloud-run-service": return await reconcileCloudRunService(input, options);
     case "invoke-cloud-run-service": return await invokeCloudRunService(input, options);
+    case "discover-cloud-run-job": return await discoverCloudRunJob(input, options);
+    case "deploy-cloud-run-job": return await deployCloudRunJob(input, options);
+    case "reconcile-cloud-run-job": return await reconcileCloudRunJob(input, options);
+    case "execute-cloud-run-job": return await executeCloudRunJob(input, options);
     default: throw new Error("unsupported GCloud actuator operation");
   }
 }
 
 export function controlPlaneDescriptor() {
-  return Object.freeze({ name: "GCloud Cloud Run Actuator", description: "Local CLI and library control-plane for bounded Google Cloud Run operations.", operations: ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"] });
+  return Object.freeze({ name: "GCloud Cloud Run Actuator", description: "Local CLI and library control-plane for bounded Google Cloud Run operations.", operations: ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service", "discover-cloud-run-job", "deploy-cloud-run-job", "reconcile-cloud-run-job", "execute-cloud-run-job"] });
 }

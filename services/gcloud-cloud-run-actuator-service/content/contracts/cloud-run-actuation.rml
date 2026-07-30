@@ -1,4 +1,4 @@
 // One bounded Google Cloud operation becomes one local CLI/library receipt.
 // This control plane keeps no database and does not accept arbitrary shell or
 // gcloud input; network delivery belongs to the runtime-authorities service.
-operations discover-cloud-run-service discover-cloud-run-domain-mapping deploy-cloud-run-service cutover-cloud-run-service reconcile-cloud-run-service invoke-cloud-run-service
+operations discover-cloud-run-service discover-cloud-run-domain-mapping deploy-cloud-run-service cutover-cloud-run-service reconcile-cloud-run-service invoke-cloud-run-service discover-cloud-run-job deploy-cloud-run-job reconcile-cloud-run-job execute-cloud-run-job

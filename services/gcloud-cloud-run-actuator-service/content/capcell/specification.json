@@ -2,7 +2,7 @@
   "name": "gcloud-cloud-run-actuator",
   "description": "An installed Google Cloud SDK exposed as one bounded local CLI and library control plane.",
   "package": {"name": "@red-cup-engineering/gcloud-cloud-run-actuator-service", "version": "1.0.0", "entrypoint": "./src/gcloud-cloud-run-actuator.mjs"},
-  "operations": ["discover-cloud-run-service", "deploy-cloud-run-service", "cutover-cloud-run-service", "invoke-cloud-run-service"],
+  "operations": ["discover-cloud-run-service", "deploy-cloud-run-service", "cutover-cloud-run-service", "invoke-cloud-run-service", "discover-cloud-run-job", "deploy-cloud-run-job", "reconcile-cloud-run-job", "execute-cloud-run-job"],
   "interfaces": ["CLI", "library"],
   "dataCarrier": "local JSONL command receipts; network publication belongs to its owning provider service",
   "persistence": "none"

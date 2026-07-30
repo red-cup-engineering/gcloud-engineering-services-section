@@ -21,13 +21,17 @@
       "cutover-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunCutoverReceipt"},
       "reconcile-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunReconciliationReceipt"},
       "invoke-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunInvocationReceipt"}
+      ,"discover-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobDiscoveryReceipt"}
+      ,"deploy-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobDeploymentReceipt"}
+      ,"reconcile-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobReconciliationReceipt"}
+      ,"execute-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobExecutionReceipt"}
     }
   },
   "x-semiotic-voxel": {
     "profile": "org.harmonious-union.semiotic-voxel.v1",
     "owner": "red-cup-engineering",
     "kind": "capability-cell",
-    "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service"],
+    "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service", "discover-cloud-run-job", "deploy-cloud-run-job", "reconcile-cloud-run-job", "execute-cloud-run-job"],
     "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["CLI", "library"]}],
     "package": "@red-cup-engineering/gcloud-cloud-run-actuator-service"
   }
