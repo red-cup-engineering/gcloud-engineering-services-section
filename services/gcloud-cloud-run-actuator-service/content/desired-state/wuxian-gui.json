@@ -4,7 +4,7 @@
   "region": "us-central1",
   "service": "wuxian-gui",
   "domain": "gui.561.group",
-  "image": "us-central1-docker.pkg.dev/five-six-one-group-dev/cloud-run-source-deploy/wuxian-gui@sha256:34c7581c8b8cb31032b317a6378bebb7752067e3edcbc49e490f0032a69ec895",
+  "image": "us-central1-docker.pkg.dev/five-six-one-group-dev/cloud-run-source-deploy/wuxian-gui@sha256:28637d3bd4f83f87af4f5bb63965b9f6cd6b91162a3ec86f65f796b23993f38e",
   "allowUnauthenticated": true,
   "environment": {
     "IAP_OPERATOR_EMAIL": "morgan.sennhauser@gmail.com",
