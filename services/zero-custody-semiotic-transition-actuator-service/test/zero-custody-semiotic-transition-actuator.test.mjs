@@ -7,7 +7,7 @@ import test from "node:test";
 import { Interface, Wallet } from "ethers";
 import { delegate, invoke } from "@ucanto/core";
 import { ed25519 } from "@ucanto/principal";
-import { createCanonicalSemioticTransitionAuthorityAdmission, createZeroCustodySemioticTransitionActuator } from "../src/zero-custody-semiotic-transition-actuator.mjs";
+import { createCanonicalSemioticTransitionAuthorityAdmission, createDirectLeaderEmergencyTransitionProjection, createZeroCustodySemioticTransitionActuator } from "../src/zero-custody-semiotic-transition-actuator.mjs";
 
 const ACCOUNT = "0x1111111111111111111111111111111111111111";
 const ENTRY = "0x2222222222222222222222222222222222222222";
@@ -36,6 +36,22 @@ function authorityReceipts(capability = CAPABILITY) {
     admissionPolicy: "reverify-erc1271-and-userop-nonce-at-every-admission", resource: RESOURCE,
     rmnSemanticDigest: RMN, userOpNonce: "0", ...shared } };
 }
+
+test("direct Leader emergency projection remains explicit and never fabricates UCAN or ERC-1271 receipts", async () => {
+  const projection = createDirectLeaderEmergencyTransitionProjection({
+    directAuthority: { authorityClass: "direct-leader-emergency", ucanVerified: false, requestProvenance: "live Leader request" },
+    workOrderPath: "/records/wo-services-obsmetrological-services-section-a1ba588a07fa.json",
+    workOrderResultNi: "ni:///sha-256;WCT8BY86qSKwgmDDbwiIrW2AHSmXHYK9bV_ZaxKgK54",
+    demandNi: "ni:///sha-256;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    policySigner: "0xe42035e55aaef429cac3235926d233101d37b585",
+    prepare: async ({ policySigner }) => ({ userOpHash: HASH, packedOperation: {}, policySigner }),
+  });
+  const prepared = await projection.prepare({});
+  assert.equal(prepared.authorityClass, "direct-leader-emergency");
+  assert.equal(prepared.ucanVerified, false);
+  assert.equal(prepared.ucanReceipt, null);
+  assert.equal(prepared.erc1271BindingReceipt, null);
+});
 
 test("canonical admission produces the exact UCAN and finalized ERC-1271 receipts consumed by SXC-M7", async () => {
   const controller = await ed25519.generate(), actor = await ed25519.generate(), executor = await ed25519.generate();

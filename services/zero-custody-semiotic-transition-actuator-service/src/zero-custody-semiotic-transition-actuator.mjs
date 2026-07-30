@@ -145,3 +145,32 @@ export function createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUr
     },
   });
 }
+
+/**
+ * Narrow break-glass seam for a live, directly supplied Leader repair order.
+ * It deliberately does not impersonate the normal UCAN/ERC-1271 admission:
+ * the returned artifact says so, and callers must retain the direct request
+ * and named work-order as its provenance.  The injected preparer is the same
+ * locally-validating ERC-4337 builder used by the normal path; this seam never
+ * owns either signing key or submits an outer transaction.
+ */
+export function createDirectLeaderEmergencyTransitionProjection({ directAuthority, workOrderPath, workOrderResultNi, demandNi, policySigner, prepare }) {
+  if (directAuthority?.authorityClass !== "direct-leader-emergency" || directAuthority.ucanVerified !== false) throw new TypeError("an explicit direct-leader-emergency authority record is required");
+  if (typeof directAuthority.requestProvenance !== "string" || directAuthority.requestProvenance.length === 0) throw new TypeError("direct emergency authority must retain request provenance");
+  if (typeof workOrderPath !== "string" || !workOrderPath.endsWith("wo-services-obsmetrological-services-section-a1ba588a07fa.json")) throw new TypeError("the exact persisted work order is required");
+  if (workOrderResultNi !== "ni:///sha-256;WCT8BY86qSKwgmDDbwiIrW2AHSmXHYK9bV_ZaxKgK54") throw new TypeError("the exact market-result NI is required");
+  if (!NI.test(demandNi ?? "") || typeof prepare !== "function") throw new TypeError("demand identity and a local UserOperation preparer are required");
+  const signer = address(policySigner, "transition policy signer");
+  return Object.freeze({
+    custody: "none", funds: "none", persistence: "none", authorityClass: "direct-leader-emergency", ucanVerified: false,
+    async prepare(input) {
+      const prepared = await prepare(Object.freeze({ ...input, policySigner: signer }));
+      if (!prepared?.userOpHash || !prepared?.packedOperation || prepared?.policySigner?.toLowerCase() !== signer) throw new Error("emergency transition preparer did not return the bound signed UserOperation");
+      return Object.freeze({
+        type: "DirectLeaderEmergencyPreparedTransition", authorityClass: "direct-leader-emergency", ucanVerified: false,
+        requestProvenance: directAuthority.requestProvenance, workOrderPath, workOrderResultNi, demandNi,
+        transitionPolicySigner: signer, ucanReceipt: null, erc1271BindingReceipt: null, prepared,
+      });
+    },
+  });
+}
