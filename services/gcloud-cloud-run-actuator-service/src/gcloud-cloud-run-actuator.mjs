@@ -2,6 +2,10 @@ import { createHash, randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 
 export const ACTOR_ID = "urn:ame:gcloud-cloud-run-actuator-service";
+// Cloud Run's addressable staged route reserves the remainder of its DNS
+// segment outside this pair.  Keep this provider rule here so callers do not
+// each invent a different safe tag budget.
+export const CLOUD_RUN_TAGGED_ROUTE_LIMITS = Object.freeze({ maxServiceAndTagCharacters: 46 });
 const SERVICE_NAME = /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/u;
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/u;
 const REGION = /^[a-z]+-[a-z]+[0-9]$/u;
@@ -22,6 +26,13 @@ function cloudTarget(input) {
     region: requireString(input.region, "Cloud Run region", REGION),
     service: requireString(input.service, "Cloud Run service", SERVICE_NAME),
   };
+}
+function stagedRevisionTag(target, value) {
+  const tag = requireString(value, "staged revision tag", REVISION_TAG);
+  if (target.service.length + tag.length > CLOUD_RUN_TAGGED_ROUTE_LIMITS.maxServiceAndTagCharacters) {
+    throw new Error("Cloud Run service and staged revision tag exceed the addressable route limit");
+  }
+  return tag;
 }
 function immutableImage(value) {
   const image = requireString(value, "container image", IMAGE);
@@ -156,7 +167,7 @@ export async function deployCloudRunService(input, options) {
   const target = cloudTarget(input);
   const image = immutableImage(input.image);
   const args = ["run", "deploy", target.service, "--project", target.project, "--region", target.region, "--image", image, "--no-traffic", "--format=json", "--quiet"];
-  const revisionTag = input.revisionTag === undefined ? undefined : requireString(input.revisionTag, "staged revision tag", REVISION_TAG);
+  const revisionTag = input.revisionTag === undefined ? undefined : stagedRevisionTag(target, input.revisionTag);
   if (revisionTag !== undefined) args.push("--tag", revisionTag);
   if (input.allowUnauthenticated === true) args.push("--allow-unauthenticated");
   else args.push("--no-allow-unauthenticated");

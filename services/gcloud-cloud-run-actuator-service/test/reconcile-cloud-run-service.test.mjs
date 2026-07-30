@@ -79,6 +79,17 @@ test("deployment only stages a digest-pinned image with no traffic", async () =>
   await assert.rejects(() => deployCloudRunService({ ...input, image: "example.com/wuxian-gui:latest" }, { gcloud: async () => "{}" }), /pinned by sha256 digest/);
 });
 
+test("staged revision tags obey the provider's combined service and tag route limit", async () => {
+  const calls = [];
+  const service = `a${"a".repeat(37)}`;
+  await deployCloudRunService({ ...input, service, revisionTag: "s-abcdef" }, { gcloud: async (args) => {
+    calls.push(args);
+    return JSON.stringify({ status: { latestReadyRevisionName: `${service}-00008` } });
+  } });
+  assert.equal(calls[0].includes("--tag"), true);
+  await assert.rejects(() => deployCloudRunService({ ...input, service: `a${"a".repeat(38)}`, revisionTag: "s-abcdef" }, { gcloud: async () => "{}" }), /addressable route limit/);
+});
+
 test("staging admits only bounded Secret Manager environment and mount bindings", async () => {
   const calls = [];
   await deployCloudRunService({ ...input, secretBindings: {
