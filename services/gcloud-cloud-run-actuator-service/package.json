@@ -4,35 +4,14 @@
   "private": true,
   "type": "module",
   "description": "A local CLI and library control-plane for bounded Google Cloud Run operations through the installed Google Cloud SDK.",
-  "exports": {".": "./src/gcloud-cloud-run-actuator.mjs"},
-  "bin": {"gcloud-cloud-run-actuator": "./bin/gcloud-cloud-run-actuator.mjs"},
-  "scripts": {"check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check bin/gcloud-cloud-run-actuator.mjs", "test": "node --test test/*.test.mjs"},
-  "x-agentic-metro-enterprise": {
-    "node-id": "gcloud-cloud-run-actuator-service",
-    "organizational-kind": "autonomously-articulating-actor-member",
-    "owners": ["gcloud-services-section"],
-    "membrane": {"law": "src/", "lasting-instances": "content/", "append-only-instances": "data/"},
-    "admission": "one bounded Cloud Run control-plane request supplied through this package's CLI or library API",
-    "refusal": "arbitrary gcloud arguments, commands outside Cloud Run, a missing deployment image, an invalid service name, missing authority for mutation, or any persistence request",
-    "operation-catalog": {
-      "discover-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunDiscoveryReceipt"},
-      "discover-cloud-run-domain-mapping": {"protocol": "CLI/library", "returns": "CloudRunDomainMappingDiscoveryReceipt"},
-      "deploy-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunDeploymentReceipt"},
-      "cutover-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunCutoverReceipt"},
-      "reconcile-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunReconciliationReceipt"},
-      "invoke-cloud-run-service": {"protocol": "CLI/library", "returns": "CloudRunInvocationReceipt"}
-      ,"discover-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobDiscoveryReceipt"}
-      ,"deploy-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobDeploymentReceipt"}
-      ,"reconcile-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobReconciliationReceipt"}
-      ,"execute-cloud-run-job": {"protocol": "CLI/library", "returns": "CloudRunJobExecutionReceipt"}
-    }
+  "exports": {
+    ".": "./src/gcloud-cloud-run-actuator.mjs"
   },
-  "x-semiotic-voxel": {
-    "profile": "org.harmonious-union.semiotic-voxel.v1",
-    "owner": "red-cup-engineering",
-    "kind": "capability-cell",
-    "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service", "discover-cloud-run-job", "deploy-cloud-run-job", "reconcile-cloud-run-job", "execute-cloud-run-job"],
-    "capabilities": [{"capability": "gcloud-cloud-run-actuator", "faces": ["CLI", "library"]}],
-    "package": "@red-cup-engineering/gcloud-cloud-run-actuator-service"
+  "bin": {
+    "gcloud-cloud-run-actuator": "./bin/gcloud-cloud-run-actuator.mjs"
+  },
+  "scripts": {
+    "check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check bin/gcloud-cloud-run-actuator.mjs",
+    "test": "node --test test/*.test.mjs"
   }
 }

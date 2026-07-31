@@ -3,24 +3,5 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Google Cloud command actuators carried as Union network actors.",
-  "x-agentic-metro-enterprise": {
-    "node-id": "gcloud-services-section",
-    "actor": "urn:ame:gcloud-services-section",
-    "organizational-kind": "service-section",
-    "owners": ["red-cup-engineering"],
-    "membrane": {"law": "services/", "lasting-instances": "content/", "append-only-instances": "data/"}
-  },
-  "x-semiotic-voxel": {
-    "profile": "org.harmonious-union.semiotic-voxel.v1",
-    "owner": "red-cup-engineering",
-    "kind": "actor",
-    "actor": "urn:ame:gcloud-services-section",
-    "operations": ["discover-cloud-run-service", "discover-cloud-run-domain-mapping", "deploy-cloud-run-service", "cutover-cloud-run-service", "reconcile-cloud-run-service", "invoke-cloud-run-service", "dispatch-fedify-message", "compare-and-set-operation"],
-    "capabilities": [
-      {"capability": "gcloud-cloud-run-actuator", "faces": ["discover", "domain-mapping", "stage", "cutover", "reconcile", "invoke"]},
-      {"capability": "gcloud-runtime-authorities", "faces": ["CloudTasks-MessageQueue", "GCS-ifGenerationMatch-operation-store"]}
-    ],
-    "package": "@red-cup-engineering/gcloud-services-section"
-  }
+  "description": "Google Cloud command actuators carried as Union network actors."
 }

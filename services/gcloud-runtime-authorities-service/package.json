@@ -12,12 +12,5 @@
     "check": "node --check src/runtime-authorities.mjs && node --check test/runtime-authorities.test.mjs",
     "test": "node --test test/*.test.mjs",
     "verify": "npm run check && npm test"
-  },
-  "x-agentic-metro-enterprise": {
-    "node-id": "gcloud-runtime-authorities-service",
-    "actor": "urn:ame:gcloud-runtime-authorities-service",
-    "organizational-kind": "network-runtime-authority",
-    "owners": ["gcloud-services-section"],
-    "refusal": "filesystem queues, polling workers, unauthenticated task delivery, mutable task payloads, and non-provider-side compare-and-set"
   }
 }

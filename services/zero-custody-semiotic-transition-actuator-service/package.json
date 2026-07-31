@@ -4,19 +4,22 @@
   "private": true,
   "type": "module",
   "description": "SXC-M7 disposable Cloud Run actuator for UCAN-authorized, paymaster-sponsored SemioticExchange transitions.",
-  "exports": { ".": "./src/zero-custody-semiotic-transition-actuator.mjs" },
-  "dependencies": { "@red-cup-engineering/animating": "0.0.0", "@red-cup-engineering/ethereum-services-section": "0.7.2", "ethers": "6.17.0" },
-  "devDependencies": { "@ucanto/core": "10.4.6", "@ucanto/principal": "9.0.3" },
-  "scripts": { "check": "node --check src/zero-custody-semiotic-transition-actuator.mjs && node --check test/zero-custody-semiotic-transition-actuator.test.mjs", "test": "node --test test/*.test.mjs", "verify": "npm run check && npm test" },
-  "x-agentic-metro-enterprise": { "node-id": "zero-custody-semiotic-transition-actuator-service", "actor": "urn:ame:zero-custody-semiotic-transition-actuator-service", "organizational-kind": "ephemeral-actuator", "owners": ["gcloud-services-section"], "refusal": "local signing keys, funds, durable runner state, generic sponsorship, or direct EOA execution" },
-  "x-semiotic-voxel": {
-    "profile": "org.harmonious-union.semiotic-voxel.v1",
-    "owner": "red-cup-engineering",
-    "kind": "capability-cell",
-    "actor": "urn:ame:zero-custody-semiotic-transition-actuator-service",
-    "operations": ["transition-semiotic-exchange"],
-    "capabilities": [{"capability": "zero-custody-semiotic-transition-actuator", "faces": ["ActivityPub", "CloudEvent", "A2A", "RMN", "ERC-4337", "ERC-7677"]}],
-    "package": "@red-cup-engineering/zero-custody-semiotic-transition-actuator-service"
+  "exports": {
+    ".": "./src/zero-custody-semiotic-transition-actuator.mjs"
+  },
+  "dependencies": {
+    "@red-cup-engineering/animating": "0.0.2",
+    "@red-cup-engineering/ethereum-services-section": "0.7.1",
+    "ethers": "6.17.0"
+  },
+  "devDependencies": {
+    "@ucanto/core": "10.4.6",
+    "@ucanto/principal": "9.0.3"
+  },
+  "scripts": {
+    "check": "node --check src/zero-custody-semiotic-transition-actuator.mjs && node --check test/zero-custody-semiotic-transition-actuator.test.mjs",
+    "test": "node --test test/*.test.mjs",
+    "verify": "npm run check && npm test"
   },
   "license": "UNLICENSED"
 }

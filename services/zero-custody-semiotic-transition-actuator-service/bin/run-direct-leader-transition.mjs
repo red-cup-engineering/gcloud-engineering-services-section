@@ -23,7 +23,7 @@ if (input.paymaster !== null) throw new Error("the emergency transition permits 
 if (!input.binding || !input.demandNi || !input.rmnSemanticDigest || !input.raiseDemand) throw new Error("binding, demand identity, semantic digest, and raiseDemand manifest are required");
 const bindingRoot = await mkdtemp(join(tmpdir(), "sxc-transition-"));
 const bindingPath = join(bindingRoot, "binding.json");
-await writeFile(bindingPath, `${JSON.stringify(input.binding)}\\n`, { mode: 0o600 });
+await writeFile(bindingPath, `${JSON.stringify(input.binding)}\n`, { mode: 0o600 });
 const signer = kmsSigner({ keyVersion: required("TRANSITION_KMS_KEY_VERSION"), expectedAddress: required("TRANSITION_SIGNER_ADDRESS") });
 const calldata = ABI.encodeFunctionData("raiseDemand", [input.raiseDemand.carrier, input.raiseDemand.grounding, input.raiseDemand.wantedLaw]);
 const prepared = await prepareEnterpriseUserOperation({ bindingPath, rpcUrl: required("CHAIN_RPC_URL"), bundlerUrl: input.preparationProfile ? undefined : required("BUNDLER_RPC_URL"), preparationProfile: input.preparationProfile, target: manifest.exchange, calldata, rmnSemanticDigest: input.rmnSemanticDigest, signUserOperationHash: (hash) => signer.signUserOperationHash(hash), forbidPaymaster: true, authorizeUserOperation: ({ chainId, entryPoint, account, operation }) => {
