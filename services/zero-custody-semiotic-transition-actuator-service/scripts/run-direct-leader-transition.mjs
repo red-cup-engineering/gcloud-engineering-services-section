@@ -3,8 +3,8 @@
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createHash } from "node:crypto";
 import { Interface, Signature, recoverAddress } from "ethers";
+import { rawNiUri } from "@red-cup-engineering/rmn-semantic-conformance-die/canonical-cbor";
 import { prepareEnterpriseUserOperation } from "../runtime/enterprise-user-operation.mjs";
 
 const WORK_ORDER = "wo-services-obsmetrological-services-section-a1ba588a07fa.json";
@@ -16,7 +16,7 @@ const required = (name) => { const value = process.env[name]; if (!value) throw 
 const input = JSON.parse(required("DIRECT_LEADER_TRANSITION_JSON"));
 if (input.workOrder !== WORK_ORDER || input.workOrderResultNi !== RESULT_NI || input.authorityClass !== "direct-leader-emergency" || input.ucanVerified !== false) throw new Error("input is not the exact direct-leader emergency authority");
 const manifest = input.transitionManifest;
-const manifestNi = `ni:///sha-256;${createHash("sha256").update(canonical(manifest)).digest("base64url")}`;
+const manifestNi = rawNiUri(canonical(manifest));
 if (!manifest || input.transitionManifestNi !== manifestNi || !/^eip155:[1-9][0-9]*$/u.test(manifest.chain ?? "") || !/^0x[0-9a-fA-F]{40}$/u.test(manifest.exchange ?? "") || !/^0x[0-9a-fA-F]{40}$/u.test(manifest.entryPoint ?? "") || !/^https:\/\/run\.googleapis\.com\/v2\/projects\/[^/]+\/locations\/[^/]+\/jobs\/[^/]+:run$/u.test(manifest.bundlerJobRunUrl ?? "")) throw new Error("a digest-bound transition deployment manifest is required");
 if (input.chain !== manifest.chain || input.exchange?.toLowerCase() !== manifest.exchange.toLowerCase() || input.entryPoint?.toLowerCase() !== manifest.entryPoint.toLowerCase() || input.preparationProfile?.entryPoint?.toLowerCase() !== manifest.entryPoint.toLowerCase()) throw new Error("input does not bind the declared transition manifest");
 if (input.paymaster !== null) throw new Error("the emergency transition permits no paymaster");

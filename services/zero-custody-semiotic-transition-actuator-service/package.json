@@ -10,6 +10,7 @@
   "dependencies": {
     "@red-cup-engineering/animating": "0.0.2",
     "@red-cup-engineering/ethereum-services-section": "0.7.1",
+    "@red-cup-engineering/rmn-semantic-conformance-die": "6.0.1",
     "ethers": "6.17.0"
   },
   "devDependencies": {
