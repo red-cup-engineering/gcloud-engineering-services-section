@@ -8,10 +8,10 @@
     ".": "./src/gcloud-cloud-run-actuator.mjs"
   },
   "bin": {
-    "gcloud-cloud-run-actuator": "./bin/gcloud-cloud-run-actuator.mjs"
+    "gcloud-cloud-run-actuator": "./scripts/gcloud-cloud-run-actuator.mjs"
   },
   "scripts": {
-    "check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check bin/gcloud-cloud-run-actuator.mjs",
+    "check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check scripts/gcloud-cloud-run-actuator.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }
