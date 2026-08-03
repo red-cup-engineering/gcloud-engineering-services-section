@@ -26,12 +26,12 @@ const bindingAccountAbi = new Interface([
 const RESOURCE = `did:pkh:eip155:31337:${ACCOUNT}`;
 const CAPABILITY = Object.freeze({ with: RESOURCE, can: "semiotic-exchange/settle-demand", nb: { locus: "ni:///sha-256;test" } });
 function authorityReceipts(capability = CAPABILITY) {
-  const capabilityNi = `ni:///sha-256;${"q".repeat(43)}`;
+  const capabilityNi = `ni:///sha-256;${"q".repeat(42)}A`;
   const shared = { controller: `did:key:z${"A".repeat(48)}`, actor: `did:key:z${"B".repeat(48)}`,
     delegationCid: `b${"a".repeat(58)}`, invocationCid: `b${"c".repeat(58)}`, capability, capabilityNi };
-  return { ucanReceipt: { id: `ni:///sha-256;${"u".repeat(43)}`, type: "UcanInvocationVerificationReceipt", version: 1,
+  return { ucanReceipt: { id: `ni:///sha-256;${"u".repeat(42)}A`, type: "UcanInvocationVerificationReceipt", version: 1,
     disposition: "authorized", revocationStatus: "active", ...shared },
-  bindingReceipt: { id: `ni:///sha-256;${"b".repeat(43)}`, type: "EnterpriseAccountControllerBindingReceipt",
+  bindingReceipt: { id: `ni:///sha-256;${"b".repeat(42)}A`, type: "EnterpriseAccountControllerBindingReceipt",
     version: 1, protocol: "ERC-1271", disposition: "bound",
     admissionPolicy: "reverify-erc1271-and-userop-nonce-at-every-admission", resource: RESOURCE,
     rmnSemanticDigest: RMN, userOpNonce: "0", ...shared } };

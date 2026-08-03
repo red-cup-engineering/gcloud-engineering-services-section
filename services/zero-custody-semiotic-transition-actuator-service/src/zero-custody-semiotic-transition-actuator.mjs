@@ -3,13 +3,12 @@ import { executeEnterpriseUserOperation } from "@red-cup-engineering/ethereum-se
 import { observeEnterpriseAccountControllerBinding } from "@red-cup-engineering/ethereum-services-section/enterprise-account-controller-binding";
 import { createUserOperationAuthorizationPolicy } from "@red-cup-engineering/ethereum-services-section/user-operation-authorization-policy";
 import { verifyUcanInvocation } from "@red-cup-engineering/animating";
-import { rawNiUri } from "@red-cup-engineering/rmn-semantic-conformance-die/canonical-cbor";
+import { makeNiUri as rawNiUri, NI_URI_PATTERN as NI } from "@red-cup-engineering/ni-uri-services-section";
 
 export const ACTOR_ID = "urn:ame:zero-custody-semiotic-transition-actuator-service";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/u;
 const BYTES32 = /^0x[0-9a-fA-F]{64}$/u;
 const DID_PKH = /^did:pkh:eip155:([1-9][0-9]*):(0x[0-9a-fA-F]{40})$/u;
-const NI = /^ni:\/\/\/sha-256;[A-Za-z0-9_-]{43}$/u;
 const EXCHANGE = new Interface([
   "function seatCell(bytes carrier,bytes32 law)", "function retireCell(bytes32 cell)",
   "function raiseDemand(bytes carrier,bytes32 grounding,bytes32 wantedLaw)",
@@ -149,7 +148,8 @@ export function createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUr
         if (String(effectDigest).toLowerCase() !== digest || calls.length !== 1 || address(calls[0].target, "RMN call target") !== exchangeAddress || BigInt(calls[0].value) !== 0n || !allowedSelectors.has(selector(calls[0].data))) throw new Error("SXC-M7 policy refuses the bounded SemioticExchange call");
         return authorization.authorize({ chainId, contract: account, userOperation: { sender: operation.sender, nonce: operation.nonce, call_data: operation.callData, call_gas_limit: operation.callGasLimit, verification_gas_limit: operation.verificationGasLimit, pre_verification_gas: operation.preVerificationGas, max_fee_per_gas: operation.maxFeePerGas, max_priority_fee_per_gas: operation.maxPriorityFeePerGas, paymaster: operation.paymaster ?? "0x", paymaster_data: operation.paymasterData ?? "0x", ...(operation.paymasterVerificationGasLimit ? { paymaster_verification_gas_limit: operation.paymasterVerificationGasLimit } : {}), ...(operation.paymasterPostOpGasLimit ? { paymaster_post_op_gas_limit: operation.paymasterPostOpGasLimit } : {}) } });
       } });
-      const event = { specversion: "1.0", cloudEventType: "org.emsenn.sxc.transition.settled.v1", source: ACTOR_ID, id: rawNiUri(json({ digest, resourceReceipts: measuredResources, userOpHash: receipt.userOpHash, transactionHash: receipt.transactionHash })), subject: resource, data: { protocol: "A2A/RMN/UCAN/ERC-1271/ERC-4337/ERC-7677", authority: admittedAuthority, rmnSemanticDigest: digest, resourceReceipts: measuredResources, transition: move.operation, selector: selector(calldata), receipt } };
+      const eventBytes = Buffer.from(json({ digest, resourceReceipts: measuredResources, userOpHash: receipt.userOpHash, transactionHash: receipt.transactionHash }), "utf8");
+      const event = { specversion: "1.0", cloudEventType: "org.emsenn.sxc.transition.settled.v1", source: ACTOR_ID, id: rawNiUri(eventBytes), subject: resource, data: { protocol: "A2A/RMN/UCAN/ERC-1271/ERC-4337/ERC-7677", authority: admittedAuthority, rmnSemanticDigest: digest, resourceReceipts: measuredResources, transition: move.operation, selector: selector(calldata), receipt } };
       return Object.freeze({ "@context": "https://www.w3.org/ns/activitystreams", type: "Create", actor: ACTOR_ID, object: { type: "CloudEvent", ...event } });
     },
   });

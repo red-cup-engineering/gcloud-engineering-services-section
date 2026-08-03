@@ -299,7 +299,7 @@ export function createCloudTasksMessageQueue(options) {
 }
 
 function objectName(key, prefix) {
-  if (typeof key !== "string" || !/^ni:\/\/\/sha-256;[A-Za-z0-9_-]{43}$/u.test(key)) throw new TypeError("transaction key must be one canonical SHA-256 ni URI");
+  if (typeof key !== "string" || !/^ni:\/\/\/sha-256;[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u.test(key)) throw new TypeError("transaction key must be one canonical SHA-256 ni URI");
   return `${prefix}${encodeURIComponent(key)}`;
 }
 
