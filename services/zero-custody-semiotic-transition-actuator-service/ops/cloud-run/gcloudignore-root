@@ -2,5 +2,5 @@
 !services/
 !services/**/
 !services/blockchain-services-section/services/ethereum-services-section/src/enterprise-user-operation.mjs
-!services/web-services-section/services/web-platform-services-section/cloud-services-section/services/gcloud-services-section/services/zero-custody-semiotic-transition-actuator-service/bin/run-direct-leader-transition.mjs
-!services/web-services-section/services/web-platform-services-section/cloud-services-section/services/gcloud-services-section/services/zero-custody-semiotic-transition-actuator-service/ops/cloud-run/Dockerfile.root-context
+!services/web-services-section/services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/zero-custody-semiotic-transition-actuator-service/bin/run-direct-leader-transition.mjs
+!services/web-services-section/services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/zero-custody-semiotic-transition-actuator-service/ops/cloud-run/Dockerfile.root-context

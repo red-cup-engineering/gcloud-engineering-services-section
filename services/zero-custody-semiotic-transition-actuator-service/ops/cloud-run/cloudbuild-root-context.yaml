@@ -1,4 +1,4 @@
 steps:
   - name: gcr.io/cloud-builders/docker
-    args: [build, -f, services/web-services-section/services/web-platform-services-section/cloud-services-section/services/gcloud-services-section/services/zero-custody-semiotic-transition-actuator-service/ops/cloud-run/Dockerfile.root-context, -t, '${_IMAGE}', .]
+    args: [build, -f, services/web-services-section/services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/zero-custody-semiotic-transition-actuator-service/ops/cloud-run/Dockerfile.root-context, -t, '${_IMAGE}', .]
 images: ['${_IMAGE}']
