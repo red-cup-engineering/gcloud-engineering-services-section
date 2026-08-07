@@ -1,7 +1,0 @@
-{
-  "name": "@red-cup-engineering/gcloud-services-section",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "description": "Google Cloud command actuators carried as Union network actors."
-}

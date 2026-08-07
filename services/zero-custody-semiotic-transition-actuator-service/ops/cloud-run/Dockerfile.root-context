@@ -1,6 +1,0 @@
-FROM node:24-slim
-WORKDIR /app
-COPY services/blockchain-services-section/services/ethereum-services-section/src/enterprise-user-operation.mjs runtime/enterprise-user-operation.mjs
-COPY services/web-services-section/services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/zero-custody-semiotic-transition-actuator-service/bin/run-direct-leader-transition.mjs bin/run-direct-leader-transition.mjs
-RUN npm init -y && npm install --omit=dev ethers@6.17.0 viem@2.55.4
-CMD ["node", "bin/run-direct-leader-transition.mjs"]
