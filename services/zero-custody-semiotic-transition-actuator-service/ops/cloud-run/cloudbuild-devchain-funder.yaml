@@ -1,0 +1,4 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: [build, -f, ops/cloud-run/Dockerfile.devchain-funder, -t, '${_IMAGE}', .]
+images: ['${_IMAGE}']
