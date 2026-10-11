@@ -1,0 +1,7 @@
+This path was a symbolic link with an absolute target, recorded from one machine:
+
+  /home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-services-section/services/computer-systems-services-section/services/web-services-section/services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/gcloud-runtime-authorities-service
+
+An absolute link resolves only on the machine that wrote it. Elsewhere it dangles, and where the path
+exists pnpm follows it into the live workspace and lists a second copy of the packages it reaches. It is
+kept here as this pointer so the record survives without injecting packages.

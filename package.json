@@ -1,7 +1,21 @@
 {
   "name": "@red-cup-engineering/gcloud-services-section",
-  "version": "1.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Google Cloud platform services, including the zero-custody semiotic transition actuator.",
   "type": "module",
-  "description": "Google Cloud command actuators carried as Union network actors."
+  "keywords": [
+    "engineering"
+  ],
+  "exports": {
+    "./zero-custody-semiotic-transition-actuator": "./scripts/zero-custody-semiotic-transition-actuator.mjs"
+  },
+  "dependencies": {
+    "@red-cup-engineering/ethereum-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/http-services-section": "workspace:*",
+    "@red-cup-engineering/ucan-invocation-verification-service": "workspace:*",
+    "@red-cup-engineering/uri-services-section": "workspace:*"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
 }
