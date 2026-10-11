@@ -1,0 +1,122 @@
+{
+  "type": "GoogleCloudRunDesiredServiceProjection",
+  "version": 1,
+  "resource": "urn:561-group:cloud-run-service:notebooklm-inference-team",
+  "target": { "project": "five-six-one-group-dev", "region": "us-central1", "service": "notebooklm-inference-team" },
+  "image": { "type": "GoogleCloudRunImageDeclaration", "status": "unresolved", "value": null, "requirement": "one Artifact Registry image pinned by sha256 digest" },
+  "imageConstruction": {
+    "type": "GoogleCloudRunNodeRuntimeImageConstructionDeclaration",
+    "version": 1,
+    "status": "partial",
+    "providerSelection": {
+      "package": { "name": "@red-cup-engineering/notebooklm-services-section", "version": "0.3.7" },
+      "requirementsLock": { "path": "requirements.lock", "sha256": "sha256:781d2674dcdd42bd95c1aad64500deaf2d961175ebc0c12489f552985166b9ec", "installation": "require-hashes" }
+    },
+    "providerRequirement": null,
+    "releaseEvidence": null,
+    "ociImageObservation": null,
+    "ociSelection": {
+      "requestedReference": "registry-1.docker.io/library/node@sha256:934240a162082fd8b8a2f90cd5114446443f1eba1c5378f6687167ca405e6584",
+      "platform": { "os": "linux", "architecture": "amd64" },
+      "tagIndexDigest": "sha256:934240a162082fd8b8a2f90cd5114446443f1eba1c5378f6687167ca405e6584",
+      "selectedManifestDigest": "sha256:f6d02cf1353049cf3658e6ce9ec03c6877a6479495f122062d195e2279d01055",
+      "configDigest": "sha256:2ff56a1e437102232fc4f3923138b9513f0d2e36bc0e57f39c3054a86c884e27"
+    },
+    "authoritySelections": {
+      "node": { "version": "24.19.0", "baseImage": "node:24.19.0-bookworm@sha256:f6d02cf1353049cf3658e6ce9ec03c6877a6479495f122062d195e2279d01055" },
+      "debian": {
+        "suite": "bookworm",
+        "snapshot": "20260805T032029Z",
+        "architecture": "amd64",
+        "packageRequests": [
+          { "name": "ca-certificates", "version": "20230311+deb12u1" },
+          { "name": "python3", "version": "3.11.2-1+b1" },
+          { "name": "python3-pip", "version": "23.0.1+dfsg-1" },
+          { "name": "python3-venv", "version": "3.11.2-1+b1" }
+        ]
+      },
+      "python": { "version": "3.11.2", "venv": "/app/notebooklm/.venv" },
+      "identity": { "uid": 10001, "gid": 10001 },
+      "paths": { "app": "/app/notebooklm", "writable": "/var/lib/notebooklm", "temporary": "/tmp/notebooklm" },
+      "network": { "port": 8080 },
+      "shutdown": { "timeoutSeconds": 10 }
+    },
+    "unresolved": ["providerRequirement", "providerReleaseEvidence", "ociImageObservation", "postAptIdentityAndFilesystemObservation", "finalImageObservation"]
+  },
+  "revision": { "type": "GoogleCloudRunRevisionDeclaration", "status": "unresolved", "name": null, "requirement": "one staged revision produced from the admitted image" },
+  "staging": { "type": "GoogleCloudRunStagingRouteDeclaration", "status": "declared", "revisionTag": "candidate" },
+  "environment": {
+    "type": "GoogleCloudRunEnvironmentDeclaration",
+    "status": "partial",
+    "values": {
+      "ACTIVITYPUB_IDENTIFIER": "notebooklm-inference-team",
+      "ACTIVITYPUB_ORIGIN": "https://notebooklm-inference-team-a2d7mjqbfa-uc.a.run.app",
+      "ACTIVITYPUB_INBOX_BEARER_TOKEN_FILE": "/secrets/activitypub/inbox-bearer-token",
+      "ACTIVITYPUB_KEYS_PATH": "/secrets/activitypub/keys.json",
+      "AGENT_CARD_JWKS": "/app/notebooklm/content/agent-cards/notebooklm-inference-team-jwks.json",
+      "AGENT_CARD_SIGNING_ALG": "EdDSA",
+      "AGENT_CARD_SIGNING_KEY": "/secrets/agent-card/signing-key",
+      "AGENT_CARD_SIGNING_KID": "notebooklm-inference-team-ed25519",
+      "CLOUDFLARE_ACCOUNT_ID": "337e54ee6dc7d488933f473204a6d89e",
+      "CLOUDFLARE_R2_BUCKET": "red-cup-engineering-resource-brokerage",
+      "HOST": "0.0.0.0",
+      "NOTEBOOKLM_A2A_ACTIVATION": "/app/notebooklm/content/config/a2a-activation.json",
+      "NOTEBOOKLM_ARTIFACT_BASE_URL": "https://notebooklm-inference-team-a2d7mjqbfa-uc.a.run.app",
+      "NOTEBOOKLM_ARTIFACT_CAPABILITY_KEY": "/secrets/notebooklm/artifact-capability-key",
+      "NOTEBOOKLM_ARTIFACT_ROOT": "/var/lib/notebooklm",
+      "NOTEBOOKLM_PYTHON": "/app/notebooklm/.venv/bin/python3",
+      "NOTEBOOKLM_SHUTDOWN_TIMEOUT_MS": "10000",
+      "PORT": "8080",
+      "SEMIOTIC_EXCHANGE_CHAIN": "0"
+    },
+    "unresolved": ["WITNESS_JOURNAL_RDF_AGENT"]
+  },
+  "secretBindings": {
+    "type": "GoogleCloudRunSecretBindingsDeclaration",
+    "status": "partial",
+    "values": {
+      "API_KEY_CLOUDFLARE_R2_EDIT": "cloudflare-r2-api-token:1",
+      "NOTEBOOKLM_AUTH_JSON": "notebooklm-auth-json:3",
+      "/secrets/activitypub/keys.json": "notebooklm-activitypub-keys:1"
+    },
+    "unresolved": [
+      { "name": "ACTIVITYPUB_INBOX_BEARER_TOKEN_FILE", "target": "/secrets/activitypub/inbox-bearer-token", "delivery": "read-only-file" },
+      { "name": "AGENT_CARD_SIGNING_KEY", "target": "/secrets/agent-card/signing-key", "delivery": "read-only-file" },
+      { "name": "NOTEBOOKLM_ARTIFACT_CAPABILITY_KEY", "target": "/secrets/notebooklm/artifact-capability-key", "delivery": "read-only-file" }
+    ]
+  },
+  "invocationAdmission": {
+    "type": "GoogleCloudRunInvocationAdmissionDeclaration",
+    "status": "declared",
+    "value": { "type": "CloudRunInvocationAdmission", "mode": "public", "closed": true },
+    "rationale": "Public discovery, ActivityPub federation, and capability-bearing artifact URLs terminate at application-owned authentication boundaries."
+  },
+  "runtime": {
+    "type": "GoogleCloudRunRuntimeDeclaration",
+    "status": "declared",
+    "concurrency": 4,
+    "cpu": "2",
+    "memory": "2Gi",
+    "serviceAccount": "notebooklm-inference-team@five-six-one-group-dev.iam.gserviceaccount.com",
+    "networkAttachment": { "mode": "none" },
+    "timeoutSeconds": 900,
+    "maxInstances": 1,
+    "minInstances": 1,
+    "executionEnvironment": "gen2",
+    "cpuThrottling": false,
+    "startupCpuBoost": true,
+    "containerPort": 8080,
+    "startupProbe": { "httpGet": { "path": "/healthz", "port": 8080 }, "initialDelaySeconds": 0, "timeoutSeconds": 1, "periodSeconds": 10, "failureThreshold": 3 },
+    "readinessProbe": { "httpGet": { "path": "/healthz", "port": 8080 }, "timeoutSeconds": 1, "periodSeconds": 10, "failureThreshold": 3, "successThreshold": 1 },
+    "livenessProbe": { "httpGet": { "path": "/healthz", "port": 8080 }, "initialDelaySeconds": 0, "timeoutSeconds": 1, "periodSeconds": 10, "failureThreshold": 3 },
+    "ingress": "all",
+    "deployHealthCheck": true
+  },
+  "traffic": { "type": "GoogleCloudRunTrafficDeclaration", "status": "explicit-gate-required", "revision": null, "percent": 100 },
+  "domain": {
+    "type": "GoogleCloudRunDomainDeclaration",
+    "status": "provider-assigned",
+    "canonicalOrigin": "https://notebooklm-inference-team-a2d7mjqbfa-uc.a.run.app",
+    "customDomain": null
+  }
+}

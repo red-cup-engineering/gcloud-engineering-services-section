@@ -1,0 +1,12 @@
+{
+  "name": "GCloud Cloud Run Actuator",
+  "description": "Retired network agent-card template. The current package is a local CLI and library control plane.",
+  "version": "0.1.0",
+  "retired": true,
+  "interfaces": [],
+  "skills": [
+    {"id": "discover-cloud-run-service", "name": "Discover Cloud Run service", "description": "Reads an exact Cloud Run service descriptor."},
+    {"id": "deploy-cloud-run-service", "name": "Deploy Cloud Run service", "description": "Stages one exact digest-pinned service/image/region tuple through the local control plane."},
+    {"id": "invoke-cloud-run-service", "name": "Invoke Cloud Run service", "description": "Invokes one exact Cloud Run service URL through the local control plane."}
+  ]
+}

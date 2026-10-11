@@ -1,5 +1,6 @@
+import { createHttpServer } from "@red-cup-engineering/http-services-section/node-server";
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
+
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,14 +8,14 @@ import test from "node:test";
 import { Interface, Wallet } from "ethers";
 import { delegate, invoke } from "@ucanto/core";
 import { ed25519 } from "@ucanto/principal";
-import { createCanonicalSemioticTransitionAuthorityAdmission, createDirectLeaderEmergencyTransitionProjection, createZeroCustodySemioticTransitionActuator } from "../src/zero-custody-semiotic-transition-actuator.mjs";
+import { createCanonicalSemioticTransitionAuthorityAdmission, createDirectLeaderEmergencyTransitionProjection, createZeroCustodySemioticTransitionActuator } from "../scripts/zero-custody-semiotic-transition-actuator.mjs";
 
 const ACCOUNT = "0x1111111111111111111111111111111111111111";
 const ENTRY = "0x2222222222222222222222222222222222222222";
 const EXCHANGE = "0x3333333333333333333333333333333333333333";
 const HASH = `0x${"44".repeat(32)}`;
 const TX = `0x${"55".repeat(32)}`;
-const RMN = `0x${"66".repeat(32)}`;
+const SEN = `0x${"66".repeat(32)}`;
 const SETTLE_SELECTOR = new Interface(["function settleDemand(bytes32 demand,bytes carrier)"]).getFunction("settleDemand").selector;
 const accountAbi = new Interface(["function entryPoint() view returns (address)", "function validateUserOp((address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData,bytes signature) userOp,bytes32 userOpHash,uint256 missingAccountFunds) returns (uint256)"]);
 const entryAbi = new Interface(["function getNonce(address sender,uint192 key) view returns (uint256)", "function getUserOpHash((address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData,bytes signature) userOp) view returns (bytes32)"]);
@@ -34,7 +35,7 @@ function authorityReceipts(capability = CAPABILITY) {
   bindingReceipt: { id: `ni:///sha-256;${"b".repeat(42)}A`, type: "EnterpriseAccountControllerBindingReceipt",
     version: 1, protocol: "ERC-1271", disposition: "bound",
     admissionPolicy: "reverify-erc1271-and-userop-nonce-at-every-admission", resource: RESOURCE,
-    rmnSemanticDigest: RMN, userOpNonce: "0", ...shared } };
+    senSemanticDigest: SEN, userOpNonce: "0", ...shared } };
 }
 
 test("direct Leader emergency projection remains explicit and never fabricates UCAN or ERC-1271 receipts", async () => {
@@ -77,7 +78,7 @@ test("canonical admission produces the exact UCAN and finalized ERC-1271 receipt
   const admit = createCanonicalSemioticTransitionAuthorityAdmission({ authority: executor,
     controller: controller.did(), actor: actor.did(), isRevoked: async () => false, rpc });
   const receipts = await admit({ invocation, caveats: CAPABILITY.nb, resource: RESOURCE,
-    operation: "settleDemand", rmnSemanticDigest: RMN,
+    operation: "settleDemand", senSemanticDigest: SEN,
     binding: { a2aCorrelation: "task-1/message-1", userOpNonce: "0", notBefore: String(now - 1),
       expiration: String(now + 60), challengeNonce: `0x${"77".repeat(32)}`,
       signature: `0x${"88".repeat(65)}`, block: "100", blockHash } });
@@ -88,16 +89,17 @@ test("canonical admission produces the exact UCAN and finalized ERC-1271 receipt
   assert.match(receipts.bindingReceipt.id, /^ni:\/\/\/sha-256;/u);
 });
 
-test("SXC-M7 runner has no key/funds and returns AP(CloudEvent(A2A(RMN))) after a sponsored UserOperation", async (context) => {
+test("SXC-M7 runner has no key/funds and returns AP(CloudEvent(A2A(SEN))) after a sponsored UserOperation", async (context) => {
   const signer = Wallet.createRandom();
   const directory = await mkdtemp(join(tmpdir(), "sxc-m7-"));
   const bindingPath = join(directory, "binding.json");
   await writeFile(bindingPath, JSON.stringify({ chain: { chainId: 31337 }, account: { address: ACCOUNT, caip10: `eip155:31337:${ACCOUNT}` }, policy: { signer: signer.address } }));
   let userOperation;
-  const server = createServer(async (request, response) => {
+  const server = createHttpServer({ handle: async (request, response) => {
     const chunks = []; for await (const chunk of request) chunks.push(chunk);
     const { id, method, params = [] } = JSON.parse(Buffer.concat(chunks)); let result;
     if (method === "eth_chainId") result = "0x7a69";
+    else if (method === "eth_getCode") result = "0x6001600055";
     else if (method === "eth_gasPrice") result = "0x3b9aca00";
     else if (method === "eth_supportedEntryPoints") result = [ENTRY];
     else if (method === "eth_estimateUserOperationGas") result = { callGasLimit: "0x186a0", verificationGasLimit: "0x30d40", preVerificationGas: "0xc350" };
@@ -106,21 +108,21 @@ test("SXC-M7 runner has no key/funds and returns AP(CloudEvent(A2A(RMN))) after 
     else if (method === "eth_call") { const data = params[0].data; if (data.startsWith(accountAbi.getFunction("entryPoint").selector)) result = accountAbi.encodeFunctionResult("entryPoint", [ENTRY]); else if (data.startsWith(entryAbi.getFunction("getNonce").selector)) result = entryAbi.encodeFunctionResult("getNonce", [0n]); else if (data.startsWith(entryAbi.getFunction("getUserOpHash").selector)) result = entryAbi.encodeFunctionResult("getUserOpHash", [HASH]); else if (data.startsWith(accountAbi.getFunction("validateUserOp").selector)) result = accountAbi.encodeFunctionResult("validateUserOp", [0n]); else throw new Error("unexpected eth_call"); }
     else throw new Error(`unexpected ${method}`);
     response.end(JSON.stringify({ jsonrpc: "2.0", id, result }));
-  });
+  } });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)); context.after(() => server.close());
   const url = `http://127.0.0.1:${server.address().port}`;
-  const remoteSigner = Object.freeze({ custody: "remote-cloud-kms-hsm", signUserOperationHash: async (hash) => signer.signingKey.sign(hash).serialized });
+  const remoteSigner = Object.freeze({ custody: "remote-hsm", signUserOperationHash: async (hash) => signer.signingKey.sign(hash).serialized });
   const paymaster = Object.freeze({ stub: async () => ({ paymaster: "0x4444444444444444444444444444444444444444", paymasterData: "0x", paymasterVerificationGasLimit: "0x1", paymasterPostOpGasLimit: "0x1" }), final: async () => ({ paymaster: "0x4444444444444444444444444444444444444444", paymasterData: "0x1234", paymasterVerificationGasLimit: "0x1", paymasterPostOpGasLimit: "0x1" }) });
-  const actuator = createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUrl: url, bundlerUrl: url, exchange: EXCHANGE, resource: RESOURCE, remoteSigner, paymaster, admitAuthority: async (input) => input, policy: { account: ACCOUNT, maxSignatures: 1, selectors: [SETTLE_SELECTOR], rmnSemanticDigests: [RMN], maxGas: { callGasLimit: "0x186a0", verificationGasLimit: "0x30d40", preVerificationGas: "0xc350", maxFeePerGas: "0x77359400", maxPriorityFeePerGas: "0x3b9aca00" } } });
+  const actuator = createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUrl: url, bundlerUrl: url, exchange: EXCHANGE, resource: RESOURCE, remoteSigner, paymaster, admitAuthority: async (input) => input, policy: { account: ACCOUNT, maxSignatures: 1, selectors: [SETTLE_SELECTOR], senSemanticDigests: [SEN], maxGas: { callGasLimit: "0x186a0", verificationGasLimit: "0x30d40", preVerificationGas: "0xc350", maxFeePerGas: "0x77359400", maxPriorityFeePerGas: "0x3b9aca00" } } });
   assert.equal(actuator.custody, "none"); assert.equal(actuator.funds, "none"); assert.equal("privateKey" in actuator, false); assert.equal("keystorePath" in actuator, false);
   const resourceReceipts = [{ type: "MeasuredResourceReceipt", input: "api-credit", amount: "1", unit: "request" }];
-  const receipt = await actuator.transition({ authority: authorityReceipts(), resourceReceipts, rmnSemanticDigest: RMN, transition: { operation: "settleDemand", args: [`0x${"77".repeat(32)}`, "0x1234"] } });
-  assert.equal(receipt.type, "Create"); assert.equal(receipt.object.type, "CloudEvent"); assert.equal(receipt.object.data.protocol, "A2A/RMN/UCAN/ERC-1271/ERC-4337/ERC-7677"); assert.equal(receipt.object.data.receipt.transactionHash, TX); assert.deepEqual(receipt.object.data.resourceReceipts, resourceReceipts); assert.match(receipt.object.id, /^ni:\/\/\/sha-256;/u); assert.equal(userOperation.paymaster, "0x4444444444444444444444444444444444444444");
+  const receipt = await actuator.transition({ authority: authorityReceipts(), resourceReceipts, senSemanticDigest: SEN, transition: { operation: "settleDemand", args: [`0x${"77".repeat(32)}`, "0x1234"] } });
+  assert.equal(receipt.type, "Create"); assert.equal(receipt.object.type, "CloudEvent"); assert.equal(receipt.object.data.protocol, "A2A/SEN/UCAN/ERC-1271/ERC-4337/ERC-7677"); assert.equal(receipt.object.data.receipt.transactionHash, TX); assert.deepEqual(receipt.object.data.resourceReceipts, resourceReceipts); assert.match(receipt.object.id, /^ni:\/\/\/sha-256;/u); assert.equal(userOperation.paymaster, "0x4444444444444444444444444444444444444444");
 });
 
 test("SXC-M7 refuses authority receipts that do not name the exact exchange transition", () => {
-  const remoteSigner = { custody: "remote-cloud-kms-hsm", signUserOperationHash() {} };
-  const actuator = createZeroCustodySemioticTransitionActuator({ bindingPath: "binding", rpcUrl: "http://rpc", bundlerUrl: "http://bundler", exchange: EXCHANGE, resource: RESOURCE, remoteSigner, paymaster: {}, admitAuthority: async (input) => input, policy: { account: ACCOUNT, selectors: [SETTLE_SELECTOR], rmnSemanticDigests: [RMN], maxGas: { callGasLimit: "0x1", verificationGasLimit: "0x1", preVerificationGas: "0x1", maxFeePerGas: "0x1", maxPriorityFeePerGas: "0x1" } } });
+  const remoteSigner = { custody: "remote-hsm", signUserOperationHash() {} };
+  const actuator = createZeroCustodySemioticTransitionActuator({ bindingPath: "binding", rpcUrl: "http://rpc", bundlerUrl: "http://bundler", exchange: EXCHANGE, resource: RESOURCE, remoteSigner, paymaster: {}, admitAuthority: async (input) => input, policy: { account: ACCOUNT, selectors: [SETTLE_SELECTOR], senSemanticDigests: [SEN], maxGas: { callGasLimit: "0x1", verificationGasLimit: "0x1", preVerificationGas: "0x1", maxFeePerGas: "0x1", maxPriorityFeePerGas: "0x1" } } });
   const wrong = { with: RESOURCE, can: "semiotic-exchange/raise-demand", nb: {} };
-  return assert.rejects(actuator.transition({ authority: authorityReceipts(wrong), resourceReceipts: [{ type: "MeasuredResourceReceipt" }], rmnSemanticDigest: RMN, transition: { operation: "settleDemand", args: [`0x${"77".repeat(32)}`, "0x"] } }), /exact SemioticExchange transition/u);
+  return assert.rejects(actuator.transition({ authority: authorityReceipts(wrong), resourceReceipts: [{ type: "MeasuredResourceReceipt" }], senSemanticDigest: SEN, transition: { operation: "settleDemand", args: [`0x${"77".repeat(32)}`, "0x"] } }), /exact SemioticExchange transition/u);
 });

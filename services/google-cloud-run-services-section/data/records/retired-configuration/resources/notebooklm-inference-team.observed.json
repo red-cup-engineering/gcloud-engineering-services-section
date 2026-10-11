@@ -1,0 +1,26 @@
+{
+  "type": "GoogleCloudRunProviderDeploymentDeclaration",
+  "version": 1,
+  "resource": "urn:561-group:cloud-run-service:notebooklm-inference-team",
+  "target": {
+    "project": "five-six-one-group-dev",
+    "region": "us-central1",
+    "service": "notebooklm-inference-team"
+  },
+  "evidence": {
+    "kind": "provider-authored-checked-in-declaration",
+    "source": "@red-cup-engineering/notebooklm-services-section/content/config/a2a-agent.json",
+    "declaredAt": "2026-07-29T22:31:44.000Z"
+  },
+  "revision": {
+    "type": "GoogleCloudRunRevisionDeclaration",
+    "name": "notebooklm-inference-team-00020-qsz"
+  },
+  "endpoint": {
+    "type": "GoogleCloudRunEndpointDeclaration",
+    "providerAssignedOrigin": "https://notebooklm-inference-team-a2d7mjqbfa-uc.a.run.app",
+    "actor": "https://notebooklm-inference-team-a2d7mjqbfa-uc.a.run.app/actors/notebooklm-inference-team",
+    "inbox": "https://notebooklm-inference-team-a2d7mjqbfa-uc.a.run.app/actors/notebooklm-inference-team/inbox",
+    "outbox": "https://notebooklm-inference-team-a2d7mjqbfa-uc.a.run.app/actors/notebooklm-inference-team/outbox"
+  }
+}
