@@ -1,5 +1,0 @@
-FROM node:24-slim
-WORKDIR /app
-COPY bin/fund-devchain-accounts.mjs bin/fund-devchain-accounts.mjs
-RUN npm init -y && npm install --omit=dev ethers@6.17.0
-CMD ["node", "bin/fund-devchain-accounts.mjs"]
