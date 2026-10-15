@@ -1,0 +1,18 @@
+{
+  "name": "@red-cup-engineering/gcloud-compute-observation-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only Google Cloud compute inventory through an injected native command boundary.",
+  "exports": {
+    ".": "./src/observe-compute-resources.mjs"
+  },
+  "scripts": {
+    "check": "node --check src/observe-compute-resources.mjs && node --check test/observe-compute-resources.test.mjs",
+    "test": "node --test test/*.test.mjs",
+    "verify": "npm run check && npm test"
+  },
+  "receivingTests": [
+    "test/observe-compute-resources.test.mjs"
+  ]
+}
