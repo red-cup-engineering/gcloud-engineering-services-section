@@ -1,6 +1,6 @@
 {
   "name": "@red-cup-engineering/gcloud-compute-observation-service",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "Read-only Google Cloud compute inventory through an injected native command boundary.",
