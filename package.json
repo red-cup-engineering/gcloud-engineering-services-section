@@ -4,8 +4,7 @@
   "description": "Google Cloud platform services, including the zero-custody semiotic transition actuator.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/red-cup-engineering/computer-web-engineering-services-section.git",
-    "directory": "services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section"
+    "url": "git+https://github.com/red-cup-engineering/gcloud-services-section.git"
   },
   "type": "module",
   "keywords": [
