@@ -1,6 +1,11 @@
 {
   "name": "@red-cup-engineering/gcloud-cloud-build-image-fabrication-service",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/computer-web-engineering-services-section.git",
+    "directory": "services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/gcloud-cloud-build-image-fabrication-service"
+  },
   "private": true,
   "type": "module",
   "exports": {
