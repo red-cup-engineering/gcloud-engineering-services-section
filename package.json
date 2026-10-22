@@ -23,5 +23,10 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs"
+  },
+  "license": "MIT",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
   }
 }
