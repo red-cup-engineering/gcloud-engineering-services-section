@@ -1,5 +1,5 @@
 {
-  "name": "@red-cup-engineering/gcloud-engineering-services-section",
+  "name": "@red-cup-engineering/gcloud-services-section",
   "version": "0.1.0",
   "description": "Google Cloud platform services, including the zero-custody semiotic transition actuator.",
   "repository": {
@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "@red-cup-engineering/ethereum-engineering-services-section": "workspace:*",
-    "@red-cup-engineering/http-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/http-services-section": "workspace:*",
     "@red-cup-engineering/ucan-invocation-verification-service": "workspace:*",
-    "@red-cup-engineering/uri-engineering-services-section": "workspace:*",
+    "@red-cup-engineering/uri-services-section": "workspace:*",
     "ethers": "6.17.0"
   },
   "scripts": {
