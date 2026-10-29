@@ -1,0 +1,33 @@
+{
+  "name": "@red-cup-engineering/google-cloud-run-services-section",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Corporation-owned declarations and observations of 561 Group Google Cloud Run resource instances.",
+  "private": false,
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emsenn/bare-cedar-fog.git",
+    "directory": "lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-systems-engineering-services-section/services/computer-web-engineering-services-section/services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/google-cloud-run-services-section"
+  },
+  "exports": {
+    ".": "./src/cloud-run-resource-projection.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "content/",
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@red-cup-engineering/computer-data-engine": "0.10.0",
+    "@red-cup-engineering/gcloud-cloud-run-actuator-service": "0.1.0"
+  },
+  "sideEffects": false
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@red-cup-engineering/gcloud-runtime-authorities-service",
+  "version": "0.3.0",
+  "type": "module",
+  "description": "Cloud Tasks dispatch and Cloud Storage transactional and immutable-evidence runtime authorities.",
+  "exports": {
+    ".": "./src/runtime-authorities.mjs",
+    "./runtime-authorities": "./src/runtime-authorities.mjs"
+  },
+  "scripts": {
+    "check": "node --check src/runtime-authorities.mjs && node --check test/runtime-authorities.test.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "google-auth-library": "11.0.2"
+  }
+}
