@@ -1,0 +1,122 @@
+{
+  "name": "@red-cup-engineering/gcloud-cloud-run-actuator-service",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A local CLI and library control-plane for bounded Google Cloud Run operations through the installed Google Cloud SDK.",
+  "exports": {
+    ".": "./src/gcloud-cloud-run-actuator.mjs"
+  },
+  "bin": {
+    "gcloud-cloud-run-actuator": "./scripts/gcloud-cloud-run-actuator.mjs"
+  },
+  "scripts": {
+    "check": "node --check src/gcloud-cloud-run-actuator.mjs && node --check scripts/gcloud-cloud-run-actuator.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@red-cup-engineering/computer-data-engine": "0.10.0"
+  },
+  "x-agentic-metro-enterprise": {
+    "node-id": "gcloud-cloud-run-actuator-service",
+    "organizational-kind": "autonomously-articulating-actor-member",
+    "owners": [
+      "gcloud-services-section"
+    ],
+    "membrane": {
+      "law": "src/",
+      "lasting-instances": "content/",
+      "append-only-instances": "data/"
+    },
+    "admission": "one bounded Cloud Run control-plane request supplied through this package's CLI or library API",
+    "refusal": "arbitrary gcloud arguments, commands outside Cloud Run, invalid resource names, mutable images, open-ended IAM mutation, or any persistence request",
+    "operation-catalog": {
+      "discover-cloud-run-service": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunDiscoveryReceipt"
+      },
+      "retire-cloud-run-service": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunRetirementReceipt"
+      },
+      "discover-cloud-run-domain-mapping": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunDomainMappingDiscoveryReceipt"
+      },
+      "deploy-cloud-run-service": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunDeploymentReceipt"
+      },
+      "cutover-cloud-run-service": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunCutoverReceipt"
+      },
+      "reconcile-cloud-run-invocation-admission": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunInvocationAdmissionReceiptOrRefusal"
+      },
+      "reconcile-cloud-run-service": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunReconciliationReceipt"
+      },
+      "invoke-cloud-run-service": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunInvocationReceipt"
+      },
+      "discover-cloud-run-job": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunJobDiscoveryReceipt"
+      },
+      "deploy-cloud-run-job": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunJobDeploymentReceipt"
+      },
+      "reconcile-cloud-run-job": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunJobReconciliationReceipt"
+      },
+      "execute-cloud-run-job": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunJobExecutionReceipt"
+      },
+      "transact-cloud-run-job-image": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunJobImageTransactionReceipt"
+      },
+      "wait-cloud-run-job-execution": {
+        "protocol": "CLI/library",
+        "returns": "CloudRunJobExecutionTerminalReceipt"
+      }
+    }
+  },
+  "x-semiotic-voxel": {
+    "profile": "org.harmonious-union.semiotic-voxel.v1",
+    "owner": "red-cup-engineering",
+    "kind": "capability-cell",
+    "operations": [
+      "discover-cloud-run-service",
+      "retire-cloud-run-service",
+      "discover-cloud-run-domain-mapping",
+      "deploy-cloud-run-service",
+      "cutover-cloud-run-service",
+      "reconcile-cloud-run-invocation-admission",
+      "reconcile-cloud-run-service",
+      "invoke-cloud-run-service",
+      "discover-cloud-run-job",
+      "deploy-cloud-run-job",
+      "reconcile-cloud-run-job",
+      "execute-cloud-run-job",
+      "transact-cloud-run-job-image",
+      "wait-cloud-run-job-execution"
+    ],
+    "capabilities": [
+      {
+        "capability": "gcloud-cloud-run-actuator",
+        "faces": [
+          "CLI",
+          "library"
+        ]
+      }
+    ],
+    "package": "@red-cup-engineering/gcloud-cloud-run-actuator-service"
+  }
+}

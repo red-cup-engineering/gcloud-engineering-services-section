@@ -1,0 +1,43 @@
+{
+  "apiVersion": "run.googleapis.com/v1",
+  "kind": "Job",
+  "metadata": {
+    "name": "daily-worker",
+    "namespace": "1019481907460",
+    "generation": 11,
+    "annotations": {
+      "run.googleapis.com/client-name": "gcloud",
+      "run.googleapis.com/operation-id": "server-output"
+    },
+    "labels": {
+      "cloud.googleapis.com/location": "us-central1",
+      "enterprise": "example"
+    }
+  },
+  "spec": {
+    "template": {
+      "metadata": {
+        "labels": { "purpose": "daily", "client.knative.dev/nonce": "server-output" }
+      },
+      "spec": {
+        "parallelism": 1,
+        "taskCount": 1,
+        "template": {
+          "spec": {
+            "containers": [{
+              "image": "us-central1-docker.pkg.dev/example-project/jobs/worker@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "env": [{ "name": "TOKEN", "valueFrom": { "secretKeyRef": { "name": "worker-token", "key": "3" } } }],
+              "resources": { "limits": { "cpu": "2", "memory": "1Gi" } },
+              "volumeMounts": [{ "name": "keys", "mountPath": "/secrets" }]
+            }],
+            "maxRetries": 0,
+            "serviceAccountName": "worker@example-project.iam.gserviceaccount.com",
+            "timeoutSeconds": "600",
+            "volumes": [{ "name": "keys", "secret": { "secretName": "signing-keys", "items": [{ "key": "latest", "path": "keys.tar" }] } }]
+          }
+        }
+      }
+    }
+  },
+  "status": { "observedGeneration": 11, "conditions": [{ "type": "Ready", "status": "True" }] }
+}

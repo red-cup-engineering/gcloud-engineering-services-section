@@ -1,0 +1,29 @@
+{
+  "name": "@red-cup-engineering/gcloud-cloud-build-image-fabrication-service",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/gcloud-cloud-build-image-fabrication.mjs",
+    "./build-config-carrier": "./src/build-config-carrier.mjs",
+    "./context-manifest": "./src/context-manifest.mjs",
+    "./release-authority-verification": "./src/release-authority-verification.mjs"
+  },
+  "bin": {
+    "fabricate-cloud-build-image": "./scripts/fabricate-cloud-build-image.mjs"
+  },
+  "files": [
+    "README.md",
+    "scripts",
+    "src"
+  ],
+  "dependencies": {
+    "@red-cup-engineering/computer-data-engine": "0.10.0",
+    "@red-cup-engineering/deployment-formation-contracts": "0.1.1",
+    "@red-cup-engineering/gcloud-runtime-authorities-service": "0.1.0",
+    "yaml": "2.9.0"
+  },
+  "scripts": {
+    "check": "node --check src/*.mjs scripts/*.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

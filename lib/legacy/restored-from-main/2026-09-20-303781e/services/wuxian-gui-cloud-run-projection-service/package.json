@@ -1,0 +1,10 @@
+{
+  "name": "@red-cup-engineering/wuxian-gui-cloud-run-projection-service",
+  "version": "0.1.0",
+  "description": "Cloud Run membrane adapter for the pinned Wuxian GUI worker projection.",
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/server.mjs && node --check scripts/transplant-successor-coordinate.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}
