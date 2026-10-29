@@ -1,2 +1,0 @@
-import assert from "node:assert/strict"; import test from "node:test"; import { createProjectedEventHub } from "../src/publish-projected-events.mts";
-test("publishes only selected topics",()=>{const chunks:string[]=[];const hub=createProjectedEventHub();hub.subscribe({write:x=>chunks.push(x)},{topics:["news"]});hub.publish([{type:"update",topic:"other"},{type:"update",topic:"news"}]);assert.equal(chunks.filter(x=>x.includes("event: update")).length,1);});

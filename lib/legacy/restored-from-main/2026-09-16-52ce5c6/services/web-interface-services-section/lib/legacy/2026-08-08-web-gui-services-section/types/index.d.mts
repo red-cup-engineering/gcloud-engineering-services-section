@@ -1,8 +1,0 @@
-export type WebGuiCharge="unknown"|"potential"|"active"|"stable";
-export interface WebGuiEntity{readonly id:string;readonly name:string;readonly kind?:string;readonly charge?:WebGuiCharge;readonly position?:Readonly<{x?:number;y?:number;z?:number}>;readonly height?:number;readonly detail?:string;readonly witness?:string}
-export interface WebGuiModel{readonly revision?:string;readonly title:string;readonly subtitle?:string;readonly actor?:Readonly<{id?:string;name?:string;condition?:string}>;readonly locus?:Readonly<{id?:string;name?:string;description?:string}>;readonly entities?:readonly WebGuiEntity[];readonly paths?:readonly Readonly<{from:string;to:string;charge?:WebGuiCharge}>[];readonly actions?:readonly Readonly<{id:string;label:string;detail?:string;command?:string;enabled?:boolean;shortcut?:string}>[];readonly journal?:readonly Readonly<{id:string;tone?:"notice"|"success"|"refusal"|"contradiction";summary:string;detail?:string}>[];readonly faculties?:readonly Readonly<{id:string;name:string;level?:number;voice?:string;active?:boolean}>[];readonly contradictions?:readonly Readonly<{id:string;summary:string;witnesses?:readonly string[];retained?:boolean}>[];readonly witness?:Readonly<{status?:"live"|"stale"|"refused"|"unwitnessed";receipt?:string;observedAt?:string}>}
-export declare function normalizeWebGuiModel(value?:unknown):Readonly<WebGuiModel&{kind:"web-gui.world-projection"}>;
-export declare const escapeHtml:(value:unknown)=>string;
-export declare const WEB_GUI_MATERIAL_CSS:string;
-export declare const WEB_GUI_CLIENT:string;
-export declare function renderWebGuiDocument(value?:WebGuiModel,options?:Readonly<{documentTitle?:string;source?:string;actionEndpoint?:string}>):string;

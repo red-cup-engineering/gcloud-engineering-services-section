@@ -1,8 +1,0 @@
-{
-  "type": "AnalyticsCuriosityOfferAgentActivation", "status": "enabled-active-under-user-systemd",
-  "host": "127.0.0.1", "port": 18458, "baseUrl": "http://127.0.0.1:18458", "timeoutMs": 30000,
-  "agentCard": "content/agent-cards/curiosity-offer.json", "signingKeyDataPath": "data/credentials/curiosity-offer-agent-card.pkcs8.pem", "publicJwks": "content/agent-cards/curiosity-offer-jwks.json",
-  "signingKid": "channel-analytics-broker-curiosity-offer-ed25519", "algorithm": "EdDSA", "customer": "urn:ame:curiosity-research-market-enterprise",
-  "agentCardIdentity": "ni:///sha-256;B5iNl2JoLtyOfc-VLAnNe_xDGMI0zuJC3rZCp7JrFmA", "agentCardSignature": "ni:///sha-256;OpZRzHakKqIRIoT4OV_sFIjxhhDmbyNMN2hdPnr2ZfQ", "boundAt": "2026-07-22T11:09:14.000Z",
-  "authorityWithheld": ["analytics measurements", "raw rows", "credentials", "ambient offer listing", "research assignment", "spending", "research truth", "publication"]
-}

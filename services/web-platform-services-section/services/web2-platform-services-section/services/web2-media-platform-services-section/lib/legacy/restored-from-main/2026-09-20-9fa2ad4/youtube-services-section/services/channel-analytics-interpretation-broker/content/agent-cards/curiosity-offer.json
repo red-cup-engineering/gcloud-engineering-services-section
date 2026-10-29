@@ -1,7 +1,0 @@
-{
-  "name": "Channel Analytics Curiosity Offer Delivery", "description": "Delivers one exact redacted analytics-induced CuriosityCandidate offer to the research market without analytics measurements or spending authority.",
-  "supportedInterfaces": [{ "url": "${BASE_URL}/a2a/jsonrpc", "protocolBinding": "JSONRPC", "tenant": "", "protocolVersion": "1.0" }, { "url": "${BASE_URL}/a2a/rest", "protocolBinding": "HTTP+JSON", "tenant": "", "protocolVersion": "1.0" }],
-  "provider": { "url": "https://emsenn.net/", "organization": "Channel Analytics Interpretation Broker via A2A Services Section" }, "version": "1.0.0",
-  "capabilities": { "streaming": false, "pushNotifications": false, "extensions": [], "extendedAgentCard": false }, "securitySchemes": {}, "securityRequirements": [], "defaultInputModes": ["application/rmn+cbor"], "defaultOutputModes": ["application/rmn+cbor"],
-  "skills": [{ "id": "pickup-curiosity-offer", "name": "Pickup curiosity offer", "description": "Returns one exact witnessed non-evidentiary curiosity offer by content identity or a typed refusal.", "tags": ["analytics", "curiosity", "research-market", "delivery"], "examples": [], "inputModes": ["application/rmn+cbor"], "outputModes": ["application/rmn+cbor"], "securityRequirements": [] }], "signatures": []
-}

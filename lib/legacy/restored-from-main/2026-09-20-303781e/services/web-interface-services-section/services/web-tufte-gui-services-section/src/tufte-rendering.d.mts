@@ -1,3 +1,0 @@
-export { renderTufteDocument, renderTufteFragment, renderTufteStyles, renderTufteForm, confidenceBadgeTile, disclosurePanelTile, normalizeTufteModel, normalizeTufteForm, normalizeTufteTable, renderTufteTable, diffTufteProjection } from "./render-tufte-document.mjs";
-export { EARLY_MAC_THEME, EARLY_MAC_THEME_STYLES, resolveTufteTheme, normalizeTufteWorkspace, computeTufteWorkspaceGeometry, describeTufteWorkspace, reduceTufteWorkspace, TUFTE_WORKSPACE_MIN_SHARE } from "./render-tufte-document.mjs";
-export type { TufteModel, TufteTile, TufteProjection, TufteMetadata, TufteComponent, TufteForm, TufteTable, TufteTableCell, TufteTableColumn, NormalizedTufteTable, RenderTufteDocumentOptions, TufteTheme, TufteWorkspaceInput, TufteWorkspace } from "./render-tufte-document.mjs";

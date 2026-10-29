@@ -1,8 +1,0 @@
-nats-py==2.6.0
-fastapi
-owlrl
-psycopg2-binary
-pyshacl
-rdflib
-uvicorn
-requests
