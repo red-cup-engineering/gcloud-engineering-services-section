@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@red-cup-engineering/ethereum-engineering-services-section": "^0.15.2",
-    "@red-cup-engineering/http-services-section": "^0.6.4",
+    "@red-cup-engineering/http-engineering-services-section": "^0.6.5-dev.2",
     "@red-cup-engineering/ucan-invocation-verification-service": "^0.1.2",
     "@red-cup-engineering/uri-services-section": "^0.1.5",
     "ethers": "^6.17.0"
