@@ -1,8 +1,0 @@
-[submodule "services/gcloud-cloud-build-image-fabrication-service"]
-	path = services/gcloud-cloud-build-image-fabrication-service
-	url = https://github.com/red-cup-engineering/gcloud-cloud-build-image-fabrication-service.git
-	branch = main
-[submodule "services/gcloud-compute-observation-service"]
-	path = services/gcloud-compute-observation-service
-	url = https://github.com/red-cup-engineering/gcloud-compute-observation-service.git
-	branch = main
