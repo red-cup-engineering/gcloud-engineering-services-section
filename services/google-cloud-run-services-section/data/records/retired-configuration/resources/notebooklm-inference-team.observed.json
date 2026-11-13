@@ -9,7 +9,7 @@
   },
   "evidence": {
     "kind": "provider-authored-checked-in-declaration",
-    "source": "@red-cup-engineering/notebooklm-services-section/content/config/a2a-agent.json",
+    "source": "@red-cup-engineering/notebooklm-engineering-services-section/content/config/a2a-agent.json",
     "declaredAt": "2026-07-29T22:31:44.000Z"
   },
   "revision": {

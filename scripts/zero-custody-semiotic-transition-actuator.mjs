@@ -3,7 +3,7 @@ import { executeEnterpriseUserOperation } from "@red-cup-engineering/ethereum-en
 import { observeEnterpriseAccountControllerBinding } from "@red-cup-engineering/ethereum-engineering-services-section/enterprise-account-controller-binding-observation";
 import { createUserOperationAuthorizationPolicy } from "@red-cup-engineering/ethereum-engineering-services-section/user-operation-authorization-policy-index";
 import { verifyUcanInvocation } from "@red-cup-engineering/ucan-invocation-verification-service";
-import { makeNiUri as rawNiUri, NI_URI_PATTERN as NI } from "@red-cup-engineering/uri-services-section/ni-uri";
+import { makeNiUri as rawNiUri, NI_URI_PATTERN as NI } from "@red-cup-engineering/uri-engineering-services-section/ni-uri";
 
 export const ACTOR_ID = "urn:ame:zero-custody-semiotic-transition-actuator-service";
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/u;

@@ -9,7 +9,7 @@
     "version": 1,
     "status": "partial",
     "providerSelection": {
-      "package": { "name": "@red-cup-engineering/notebooklm-services-section", "version": "0.3.7" },
+      "package": { "name": "@red-cup-engineering/notebooklm-engineering-services-section", "version": "0.3.7" },
       "requirementsLock": { "path": "requirements.lock", "sha256": "sha256:781d2674dcdd42bd95c1aad64500deaf2d961175ebc0c12489f552985166b9ec", "installation": "require-hashes" }
     },
     "providerRequirement": null,
