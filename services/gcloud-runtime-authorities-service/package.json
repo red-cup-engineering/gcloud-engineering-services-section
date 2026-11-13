@@ -7,7 +7,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/computer-web-engineering-services-section.git",
-    "directory": "services/web-platform-services-section/services/cloud-services-section/services/gcloud-services-section/services/gcloud-runtime-authorities-service"
+    "directory": "services/web-platform-services-section/services/cloud-services-section/services/gcloud-engineering-services-section/services/gcloud-runtime-authorities-service"
   },
   "exports": {
     ".": "./src/runtime-authorities.mjs",
