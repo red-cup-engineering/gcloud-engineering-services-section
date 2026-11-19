@@ -36,73 +36,73 @@ function exchangeCall(transition) {
   const fragment = EXCHANGE.getFunction(transition.operation, args); if (!fragment) throw new TypeError("unknown SemioticExchange operation");
   return EXCHANGE.encodeFunctionData(fragment, args);
 }
-function admittedResourceReceipts(value) {
+function validatedResourceRecords(value) {
   if (!Array.isArray(value) || value.length === 0) throw new TypeError("one or more measured resource receipts are required");
-  const receipts = value.map((receipt, index) => {
-    if (receipt === null || typeof receipt !== "object" || Array.isArray(receipt) || Object.keys(receipt).length === 0) throw new TypeError(`resourceReceipts[${index}] must be one nonempty receipt object`);
-    return structuredClone(receipt);
+  const records = value.map((record, index) => {
+    if (record === null || typeof record !== "object" || Array.isArray(record) || Object.keys(record).length === 0) throw new TypeError(`resourceReceipts[${index}] must be one nonempty receipt object`);
+    return structuredClone(record);
   });
-  return Object.freeze(receipts);
+  return Object.freeze(records);
 }
-function validateAuthorityReceipts({ ucanReceipt, bindingReceipt, resource, operation, senSemanticDigest }) {
+function validateAuthorityRecords({ ucanReceipt: ucanRecord, bindingReceipt: bindingRecord, resource, operation, senSemanticDigest }) {
   const did = DID_PKH.exec(resource); if (!did) throw new TypeError("resource must be did:pkh:eip155:<chainId>:<address>");
-  if (ucanReceipt?.type !== "UcanInvocationVerificationReceipt" || ucanReceipt.version !== 1
-    || ucanReceipt.disposition !== "authorized" || ucanReceipt.revocationStatus !== "active"
-    || !NI.test(ucanReceipt.id ?? "") || !NI.test(ucanReceipt.capabilityNi ?? "")) {
+  if (ucanRecord?.type !== "UcanInvocationVerificationReceipt" || ucanRecord.version !== 1
+    || ucanRecord.disposition !== "authorized" || ucanRecord.revocationStatus !== "active"
+    || !NI.test(ucanRecord.id ?? "") || !NI.test(ucanRecord.capabilityNi ?? "")) {
     throw new Error("a current standards-conformant UCAN invocation receipt is required");
   }
-  const capability = ucanReceipt.capability;
+  const capability = ucanRecord.capability;
   if (!capability || capability.with?.toLowerCase() !== resource.toLowerCase()
     || capability.can !== ABILITY[operation] || !capability.nb || typeof capability.nb !== "object") {
     throw new Error("UCAN lacks the exact SemioticExchange transition capability over the account resource");
   }
-  if (bindingReceipt?.type !== "EnterpriseAccountControllerBindingReceipt" || bindingReceipt.version !== 1
-    || bindingReceipt.protocol !== "ERC-1271" || bindingReceipt.disposition !== "bound"
-    || bindingReceipt.admissionPolicy !== "reverify-erc1271-and-userop-nonce-at-every-admission"
-    || !NI.test(bindingReceipt.id ?? "") || !NI.test(bindingReceipt.capabilityNi ?? "")) {
+  if (bindingRecord?.type !== "EnterpriseAccountControllerBindingReceipt" || bindingRecord.version !== 1
+    || bindingRecord.protocol !== "ERC-1271" || bindingRecord.disposition !== "bound"
+    || bindingRecord.admissionPolicy !== "reverify-erc1271-and-userop-nonce-at-every-admission"
+    || !NI.test(bindingRecord.id ?? "") || !NI.test(bindingRecord.capabilityNi ?? "")) {
     throw new Error("a finalized EnterpriseAccount controller binding receipt is required");
   }
-  if (bindingReceipt.resource?.toLowerCase() !== resource.toLowerCase()
-    || bindingReceipt.controller !== ucanReceipt.controller || bindingReceipt.actor !== ucanReceipt.actor
-    || bindingReceipt.delegationCid !== ucanReceipt.delegationCid
-    || bindingReceipt.invocationCid !== ucanReceipt.invocationCid
-    || bindingReceipt.senSemanticDigest?.toLowerCase() !== senSemanticDigest
-    || bindingReceipt.capabilityNi !== ucanReceipt.capabilityNi) {
+  if (bindingRecord.resource?.toLowerCase() !== resource.toLowerCase()
+    || bindingRecord.controller !== ucanRecord.controller || bindingRecord.actor !== ucanRecord.actor
+    || bindingRecord.delegationCid !== ucanRecord.delegationCid
+    || bindingRecord.invocationCid !== ucanRecord.invocationCid
+    || bindingRecord.senSemanticDigest?.toLowerCase() !== senSemanticDigest
+    || bindingRecord.capabilityNi !== ucanRecord.capabilityNi) {
     throw new Error("UCAN and EnterpriseAccount binding receipts do not qualify the same invocation context");
   }
-  return Object.freeze({ resource: resource.toLowerCase(), controller: ucanReceipt.controller,
-    actor: ucanReceipt.actor, delegationCid: ucanReceipt.delegationCid,
-    invocationCid: ucanReceipt.invocationCid, ucanReceipt: ucanReceipt.id,
-    controllerBindingReceipt: bindingReceipt.id });
+  return Object.freeze({ resource: resource.toLowerCase(), controller: ucanRecord.controller,
+    actor: ucanRecord.actor, delegationCid: ucanRecord.delegationCid,
+    invocationCid: ucanRecord.invocationCid, ucanReceipt: ucanRecord.id,
+    controllerBindingReceipt: bindingRecord.id });
 }
 
 /** Compose the two independent authority observations for one exact transition. */
-export function createCanonicalSemioticTransitionAuthorityAdmission({ authority, controller, actor, isRevoked, rpc }) {
+export function createCanonicalSemioticTransitionAuthorityValidation({ authority, controller, actor, isRevoked, rpc }) {
   if (typeof isRevoked !== "function" || typeof rpc !== "function") throw new TypeError("canonical authority admission requires live revocation and finalized-chain observers");
   return async ({ invocation, caveats = {}, binding, resource, operation, senSemanticDigest }) => {
     const did = DID_PKH.exec(resource ?? "");
     const can = ABILITY[operation];
     if (!did || can === undefined || binding === null || typeof binding !== "object") throw new TypeError("authority input does not name one exact SemioticExchange transition");
     const capability = Object.freeze({ with: resource.toLowerCase(), can, nb: Object.freeze(structuredClone(caveats)) });
-    const ucanReceipt = await verifyUcanInvocation({ invocation, authority, controller, actor, capability, isRevoked });
-    const bindingReceipt = await observeEnterpriseAccountControllerBinding({
+    const ucanRecord = await verifyUcanInvocation({ invocation, authority, controller, actor, capability, isRevoked });
+    const bindingRecord = await observeEnterpriseAccountControllerBinding({
       profile: "org.emsenn.evm.enterprise-account-controller-binding.v1", chain: `eip155:${did[1]}`,
       account: did[2], resource: resource.toLowerCase(), controller, actor,
-      delegationCid: ucanReceipt.delegationCid, invocationCid: ucanReceipt.invocationCid, capability,
-      capabilityNi: ucanReceipt.capabilityNi,
+      delegationCid: ucanRecord.delegationCid, invocationCid: ucanRecord.invocationCid, capability,
+      capabilityNi: ucanRecord.capabilityNi,
       senSemanticDigest, a2aCorrelation: binding.a2aCorrelation, userOpNonce: binding.userOpNonce,
       notBefore: binding.notBefore, expiration: binding.expiration, challengeNonce: binding.challengeNonce,
       signature: binding.signature, block: binding.block, blockHash: binding.blockHash,
     }, { rpc });
-    return Object.freeze({ ucanReceipt, bindingReceipt });
+    return Object.freeze({ ucanReceipt: ucanRecord, bindingReceipt: bindingRecord });
   };
 }
 
 /** SXC-M7 composition: AP(CloudEvent(A2A(SEN))) -> UCAN -> ERC-7677 -> ERC-4337 -> SemioticExchange. */
-export function createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUrl, bundlerUrl, exchange, resource, remoteSigner, paymaster, policy, admitAuthority }) {
+export function createZeroStorageSemioticTransitionActuator({ bindingPath, rpcUrl, bundlerUrl, exchange, resource, remoteSigner, paymaster, policy, admitAuthority: validateAuthority }) {
   const exchangeAddress = address(exchange, "SemioticExchange"); const did = DID_PKH.exec(resource ?? ""); if (!did) throw new TypeError("resource must be did:pkh");
   if (!remoteSigner || remoteSigner.custody !== "remote-hsm" || typeof remoteSigner.signUserOperationHash !== "function") throw new TypeError("SXC-M7 requires an explicitly injected remote HSM signer");
-  if (typeof admitAuthority !== "function") throw new TypeError("SXC-M7 requires per-transition UCAN/revocation/ERC-1271 admission");
+  if (typeof validateAuthority !== "function") throw new TypeError("SXC-M7 requires per-transition UCAN/revocation/ERC-1271 admission");
   if (!policy || !Array.isArray(policy.selectors) || policy.selectors.length === 0 || !Array.isArray(policy.senSemanticDigests) || policy.senSemanticDigests.length === 0 || !policy.maxGas) throw new TypeError("SXC-M7 policy must bound selectors, SEN digests, and gas");
   const allowedSelectors = new Set(policy.selectors.map((value) => /^0x[0-9a-fA-F]{8}$/u.test(value) ? value.toLowerCase() : (() => { throw new TypeError("policy selector is invalid"); })()));
   const allowedDigests = new Set(policy.senSemanticDigests.map((value) => bytes32(value, "policy SEN digest")));
@@ -112,24 +112,24 @@ export function createZeroCustodySemioticTransitionActuator({ bindingPath, rpcUr
   const authorization = createUserOperationAuthorizationPolicy({ chainId: Number(did[1]), account: address(policy.account, "policy account"), contracts: [address(policy.account, "policy account")], maxSignatures: policy.maxSignatures ?? 1 });
   return Object.freeze({
     custody: "none", funds: "none", persistence: "none",
-    async transition({ authority, resourceReceipts, senSemanticDigest, transition: move }) {
+    async transition({ authority, resourceReceipts: resourceRecords, senSemanticDigest, transition: move }) {
       const calldata = exchangeCall(move); const digest = bytes32(senSemanticDigest, "SEN semantic digest");
-      const measuredResources = admittedResourceReceipts(resourceReceipts);
-      const admitted = await admitAuthority(Object.freeze({ ...authority, resource,
+      const measuredResources = validatedResourceRecords(resourceRecords);
+      const validated = await validateAuthority(Object.freeze({ ...authority, resource,
         operation: move.operation, senSemanticDigest: digest }));
-      const admittedAuthority = validateAuthorityReceipts({ ucanReceipt: admitted?.ucanReceipt,
-        bindingReceipt: admitted?.bindingReceipt, resource, operation: move.operation,
+      const validatedAuthority = validateAuthorityRecords({ ucanReceipt: validated?.ucanReceipt,
+        bindingReceipt: validated?.bindingReceipt, resource, operation: move.operation,
         senSemanticDigest: digest });
-      const receipt = await executeEnterpriseUserOperation({ bindingPath, rpcUrl, bundlerUrl, target: exchangeAddress, calldata, senSemanticDigest: digest, signUserOperationHash: (hash) => remoteSigner.signUserOperationHash(hash), paymaster, authorizeUserOperation: ({ chainId, account, operation }) => {
+      const record = await executeEnterpriseUserOperation({ bindingPath, rpcUrl, bundlerUrl, target: exchangeAddress, calldata, senSemanticDigest: digest, signUserOperationHash: (hash) => remoteSigner.signUserOperationHash(hash), paymaster, authorizeUserOperation: ({ chainId, account, operation }) => {
         if (!allowedDigests.has(digest)) throw new Error("SXC-M7 policy refuses the SEN semantic digest");
-        if (BigInt(operation.nonce) !== BigInt(admitted.bindingReceipt.userOpNonce)) throw new Error("controller binding receipt does not bind the current UserOperation nonce");
+        if (BigInt(operation.nonce) !== BigInt(validated.bindingReceipt.userOpNonce)) throw new Error("controller binding receipt does not bind the current UserOperation nonce");
         for (const [field, ceiling] of Object.entries(gas)) if (BigInt(operation[field]) > ceiling) throw new Error(`SXC-M7 policy refuses ${field}`);
         const [effectDigest, calls] = ACCOUNT.decodeFunctionData("executeSen", operation.callData);
         if (String(effectDigest).toLowerCase() !== digest || calls.length !== 1 || address(calls[0].target, "SEN call target") !== exchangeAddress || BigInt(calls[0].value) !== 0n || !allowedSelectors.has(selector(calls[0].data))) throw new Error("SXC-M7 policy refuses the bounded SemioticExchange call");
         return authorization.authorize({ chainId, contract: account, userOperation: { sender: operation.sender, nonce: operation.nonce, call_data: operation.callData, call_gas_limit: operation.callGasLimit, verification_gas_limit: operation.verificationGasLimit, pre_verification_gas: operation.preVerificationGas, max_fee_per_gas: operation.maxFeePerGas, max_priority_fee_per_gas: operation.maxPriorityFeePerGas, paymaster: operation.paymaster ?? "0x", paymaster_data: operation.paymasterData ?? "0x", ...(operation.paymasterVerificationGasLimit ? { paymaster_verification_gas_limit: operation.paymasterVerificationGasLimit } : {}), ...(operation.paymasterPostOpGasLimit ? { paymaster_post_op_gas_limit: operation.paymasterPostOpGasLimit } : {}) } });
       } });
-      const eventBytes = Buffer.from(json({ digest, resourceReceipts: measuredResources, userOpHash: receipt.userOpHash, transactionHash: receipt.transactionHash }), "utf8");
-      const event = { specversion: "1.0", cloudEventType: "org.emsenn.sxc.transition.settled.v1", source: ACTOR_ID, id: rawNiUri(eventBytes), subject: resource, data: { protocol: "A2A/SEN/UCAN/ERC-1271/ERC-4337/ERC-7677", authority: admittedAuthority, senSemanticDigest: digest, resourceReceipts: measuredResources, transition: move.operation, selector: selector(calldata), receipt } };
+      const eventBytes = Buffer.from(json({ digest, resourceReceipts: measuredResources, userOpHash: record.userOpHash, transactionHash: record.transactionHash }), "utf8");
+      const event = { specversion: "1.0", cloudEventType: "org.emsenn.sxc.transition.settled.v1", source: ACTOR_ID, id: rawNiUri(eventBytes), subject: resource, data: { protocol: "A2A/SEN/UCAN/ERC-1271/ERC-4337/ERC-7677", authority: validatedAuthority, senSemanticDigest: digest, resourceReceipts: measuredResources, transition: move.operation, selector: selector(calldata), receipt: record } };
       return Object.freeze({ "@context": "https://www.w3.org/ns/activitystreams", type: "Create", actor: ACTOR_ID, object: { type: "CloudEvent", ...event } });
     },
   });
