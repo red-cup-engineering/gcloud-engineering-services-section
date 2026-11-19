@@ -1,0 +1,16 @@
+{
+  "name": "projects/example-project/locations/us-central1/jobs/daily-worker/executions/daily-worker-4m8kw",
+  "uid": "5fd8430f-cd8f-48ab-a784-ca7a68442c9e",
+  "generation": "1",
+  "terminalCondition": {
+    "type": "Completed",
+    "state": "CONDITION_FAILED",
+    "executionReason": "NON_ZERO_EXIT_CODE",
+    "message": "One task failed."
+  },
+  "succeededCount": 0,
+  "failedCount": 1,
+  "cancelledCount": 0,
+  "retriedCount": 2,
+  "completionTime": "2026-08-16T12:02:00.000Z"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@red-cup-engineering/gcloud-runtime-authorities-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloud Tasks dispatch and Cloud Storage generation-guarded runtime authorities.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/computer-web-engineering-services-section.git",
+    "directory": "services/web-platform-services-section/services/cloud-services-section/services/gcloud-engineering-services-section/services/gcloud-runtime-authorities-service"
+  },
+  "exports": {
+    ".": "./src/runtime-authorities.mjs",
+    "./runtime-authorities": "./src/runtime-authorities.mjs"
+  },
+  "scripts": {
+    "check": "node --check src/runtime-authorities.mjs",
+    "verify": "npm run check"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "apiVersion": "run.googleapis.com/v1",
+  "kind": "Execution",
+  "metadata": { "name": "daily-worker-9hq2m", "generation": 1 },
+  "spec": { "taskCount": 2, "parallelism": 1 },
+  "status": {
+    "observedGeneration": 1,
+    "conditions": [{ "type": "Completed", "status": "True", "reason": "Completed", "message": "Execution completed successfully." }],
+    "succeededCount": 2,
+    "failedCount": 0,
+    "cancelledCount": 0,
+    "retriedCount": 0,
+    "completionTime": "2026-08-16T12:01:00.000Z"
+  }
+}

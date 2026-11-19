@@ -1,0 +1,25 @@
+{
+  "name": "projects/example-project/locations/us-central1/jobs/daily-worker",
+  "uid": "1a56987c-0cd8-4249-b771-4fa153f01c41",
+  "generation": "12",
+  "observedGeneration": "12",
+  "labels": { "enterprise": "example" },
+  "template": {
+    "labels": { "purpose": "daily" },
+    "taskCount": 1,
+    "parallelism": 1,
+    "template": {
+      "serviceAccount": "worker@example-project.iam.gserviceaccount.com",
+      "timeout": "600s",
+      "maxRetries": 0,
+      "containers": [{
+        "image": "us-central1-docker.pkg.dev/example-project/jobs/worker@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "env": [{ "name": "TOKEN", "valueSource": { "secretKeyRef": { "secret": "worker-token", "version": "3" } } }],
+        "resources": { "limits": { "cpu": "2", "memory": "1Gi" } },
+        "volumeMounts": [{ "name": "keys", "mountPath": "/secrets" }]
+      }],
+      "volumes": [{ "name": "keys", "secret": { "secret": "signing-keys", "items": [{ "version": "latest", "path": "keys.tar" }] } }]
+    }
+  },
+  "terminalCondition": { "type": "Ready", "state": "CONDITION_SUCCEEDED" }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@red-cup-engineering/gcloud-engineering-services-section",
+  "version": "0.1.0",
+  "description": "Google Cloud platform services, including the zero-custody semiotic transition actuator.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/gcloud-engineering-services-section.git"
+  },
+  "type": "module",
+  "keywords": [
+    "engineering"
+  ],
+  "exports": {
+    "./zero-custody-semiotic-transition-actuator": "./scripts/zero-custody-semiotic-transition-actuator.mjs",
+    "./google-cloud-kms-signer": "./scripts/google-cloud-kms-signer.mjs"
+  },
+  "dependencies": {
+    "@red-cup-engineering/ethereum-engineering-services-section": "^0.15.2",
+    "@red-cup-engineering/http-engineering-services-section": "^0.6.6",
+    "@red-cup-engineering/ucan-invocation-verification-service": "^0.1.2",
+    "@red-cup-engineering/uri-engineering-services-section": "^0.1.5",
+    "ethers": "^6.17.0"
+  },
+  "license": "MIT",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  }
+}
