@@ -7,9 +7,6 @@
     "url": "git+https://github.com/red-cup-engineering/gcloud-engineering-services-section.git"
   },
   "type": "module",
-  "keywords": [
-    "engineering"
-  ],
   "exports": {
     "./zero-custody-semiotic-transition-actuator": "./scripts/zero-custody-semiotic-transition-actuator.mjs",
     "./google-cloud-kms-signer": "./scripts/google-cloud-kms-signer.mjs"
@@ -21,9 +18,5 @@
     "@red-cup-engineering/uri-engineering-services-section": "^0.1.5",
     "ethers": "^6.17.0"
   },
-  "license": "MIT",
-  "funding": {
-    "type": "individual",
-    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
-  }
+  "license": "MIT"
 }
