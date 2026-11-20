@@ -26,5 +26,8 @@
   "funding": {
     "type": "individual",
     "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  },
+  "dependencies": {
+    "@red-cup-engineering/signcell": "^0.18.0 || 0.18.1-dev.0"
   }
 }

@@ -1,10 +1,11 @@
-const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-const nonempty = value => typeof value === 'string' && value.length > 0;
+import { isNonEmptyString, isRecord } from "@red-cup-engineering/signcell/values";
+
+
 const unavailable = reason => ({status:'unavailable', reason});
 const observed = value => value?.status === 'observed';
-const resourceName = value => nonempty(value?.metadata?.name) ? value.metadata.name
-  : (nonempty(value?.name) ? value.name.split('/').at(-1) : null);
-function list(reading, valid = object) {
+const resourceName = value => isNonEmptyString(value?.metadata?.name) ? value.metadata.name
+  : (isNonEmptyString(value?.name) ? value.name.split('/').at(-1) : null);
+function list(reading, valid = isRecord) {
   if (!observed(reading)) return reading;
   return Array.isArray(reading.value) && reading.value.every(valid)
     ? reading : unavailable('invalid-native-list');
@@ -15,38 +16,38 @@ function list(reading, valid = object) {
  */
 export async function observeGoogleCloudComputeResources(configuration, {jsonCommand} = {}) {
   const region = configuration?.cloudRunRegion;
-  if (!nonempty(region) || !/^[a-z][a-z0-9-]+$/u.test(region) || typeof jsonCommand !== 'function')
+  if (!isNonEmptyString(region) || !/^[a-z][a-z0-9-]+$/u.test(region) || typeof jsonCommand !== 'function')
     throw new TypeError('Google observation needs an explicit Cloud Run region and command boundary');
   const gcloud = args => jsonCommand('gcloud', [...args, '--format=json', '--quiet'],
     {CLOUDSDK_CORE_DISABLE_PROMPTS:'1'});
-  const accounts = list(await gcloud(['auth','list']), row => object(row) && nonempty(row.account));
-  const projectsReading = list(await gcloud(['projects','list']), row => object(row) && nonempty(row.projectId));
+  const accounts = list(await gcloud(['auth','list']), row => isRecord(row) && isNonEmptyString(row.account));
+  const projectsReading = list(await gcloud(['projects','list']), row => isRecord(row) && isNonEmptyString(row.projectId));
   const projects = [];
   if (observed(projectsReading)) for (const project of projectsReading.value) {
     const id = project.projectId;
     let billing = await gcloud(['billing','projects','describe',id]);
-    if (observed(billing) && (!object(billing.value) || typeof billing.value.billingEnabled !== 'boolean'))
+    if (observed(billing) && (!isRecord(billing.value) || typeof billing.value.billingEnabled !== 'boolean'))
       billing = unavailable('invalid-native-billing');
     const services = list(await gcloud(['services','list','--enabled',`--project=${id}`]),
-      row => object(row) && nonempty(row.config?.name));
+      row => isRecord(row) && isNonEmptyString(row.config?.name));
     const enabled = observed(services) ? services.value.map(entry => entry.config.name) : [];
     const disabled = () => observed(services) ? {status:'not-enabled'} : unavailable('enabled-services-unobserved');
     const run = enabled.includes('run.googleapis.com')
       ? list(await gcloud(['run','services','list',`--project=${id}`,'--platform=managed',`--region=${region}`]),
-        row => object(row) && nonempty(row.metadata?.name)) : disabled();
+        row => isRecord(row) && isNonEmptyString(row.metadata?.name)) : disabled();
     const runJobs = enabled.includes('run.googleapis.com')
       ? list(await gcloud(['run','jobs','list',`--project=${id}`,`--region=${region}`]),
-        row => object(row) && nonempty(resourceName(row))) : disabled();
+        row => isRecord(row) && isNonEmptyString(resourceName(row))) : disabled();
     const functions = enabled.includes('cloudfunctions.googleapis.com')
       ? list(await gcloud(['functions','list',`--project=${id}`,`--regions=${region}`]),
-        row => object(row) && nonempty(row.name)) : disabled();
+        row => isRecord(row) && isNonEmptyString(row.name)) : disabled();
     const storage = enabled.includes('storage.googleapis.com')
-      ? list(await gcloud(['storage','buckets','list',`--project=${id}`]), row => object(row) && nonempty(row.name)) : disabled();
+      ? list(await gcloud(['storage','buckets','list',`--project=${id}`]), row => isRecord(row) && isNonEmptyString(row.name)) : disabled();
     const compute = billing.value?.billingEnabled === false
       ? unavailable('billing-disabled; Compute Engine list cannot establish an empty inventory')
       : enabled.includes('compute.googleapis.com')
         ? list(await gcloud(['compute','instances','list',`--project=${id}`]),
-          row => object(row) && nonempty(row.name) && nonempty(row.zone)) : disabled();
+          row => isRecord(row) && isNonEmptyString(row.name) && isNonEmptyString(row.zone)) : disabled();
     projects.push({projectId:id, name:project.name, lifecycle:project.lifecycleState,
       billing:observed(billing) ? {status:'observed',enabled:billing.value.billingEnabled} : billing,
       enabledComputeServices:enabled.filter(name => /^(compute|run|cloudfunctions|cloudbuild|storage|artifactregistry)\.googleapis\.com$/u.test(name)),
