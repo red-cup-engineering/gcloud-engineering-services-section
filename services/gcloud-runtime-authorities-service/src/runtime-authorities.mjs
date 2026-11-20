@@ -1,3 +1,4 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { createHash, createPublicKey, verify as verifySignature } from "node:crypto";
 
 const TASKS_ROOT = "https://cloudtasks.googleapis.com/v2/";
@@ -17,7 +18,7 @@ function requiredFunction(value, label) {
 
 function base64url(bytes) { return Buffer.from(bytes).toString("base64url"); }
 function sha256(text) { return createHash("sha256").update(text).digest("base64url"); }
-function sha256Hex(text) { return createHash("sha256").update(text).digest("hex"); }
+
 
 const GOOGLE_METADATA_TOKEN = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 const GOOGLE_OIDC_CERTS = "https://www.googleapis.com/oauth2/v3/certs";

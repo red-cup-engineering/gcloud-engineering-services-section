@@ -16,5 +16,8 @@
   "scripts": {
     "check": "node --check src/runtime-authorities.mjs",
     "verify": "npm run check"
+  },
+  "dependencies": {
+    "@red-cup-engineering/semiotic-content-address-system": "^0.1.7 || 0.1.8-dev.0"
   }
 }
