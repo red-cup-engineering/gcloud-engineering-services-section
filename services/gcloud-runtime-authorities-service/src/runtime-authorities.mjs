@@ -182,19 +182,19 @@ function sameTask(existing, requested) {
     && schedulesMatch;
 }
 
-function storageAdapter(storage) {
-  if (typeof storage?.put === "function" && typeof storage?.get === "function") {
+function custodyAdapter(custody) {
+  if (typeof custody?.put === "function" && typeof custody?.get === "function") {
     return Object.freeze({
-      retain: async ({ identity, mediaType, bytes }) => storage.put({ ni: identity, mediaType, bytes }),
+      retain: async ({ identity, mediaType, bytes }) => custody.put({ ni: identity, mediaType, bytes }),
       retrieve: async (identity) => {
-        const kept = await storage.get(identity);
-        if (kept === null || kept === undefined) return undefined;
-        if (!kept || !Buffer.isBuffer(kept.bytes)) throw new TypeError("immutable custody get must return { bytes } or null");
-        return kept.bytes;
+        const retained = await custody.get(identity);
+        if (retained === null || retained === undefined) return undefined;
+        if (!retained || !Buffer.isBuffer(retained.bytes)) throw new TypeError("immutable custody get must return { bytes } or null");
+        return retained.bytes;
       },
     });
   }
-  if (typeof storage?.retain === "function" && typeof storage?.retrieve === "function") return storage;
+  if (typeof custody?.retain === "function" && typeof custody?.retrieve === "function") return custody;
   throw new TypeError("Cloud Tasks queue requires immutable custody { put, get } or legacy { retain, retrieve } adapters");
 }
 
@@ -219,7 +219,7 @@ export function createCloudTasksMessageQueue(options) {
   const serviceAccountEmail = requiredText(options.serviceAccountEmail, "Cloud Tasks OIDC service account");
   const audience = requiredText(options.audience ?? targetUrl.href, "Cloud Tasks OIDC audience");
   const request = requiredFunction(options.request ?? createGoogleApiRequest(options.googleApiRequestOptions), "authenticated Cloud Tasks request");
-  const immutableStorage = storageAdapter(options.custody);
+  const immutableCustody = custodyAdapter(options.custody);
   const authenticate = options.authenticate === undefined
     ? createGoogleOidcVerifier({ ...(options.oidcVerifierOptions ?? {}), audience, serviceAccountEmail })
     : requiredFunction(options.authenticate, "Cloud Tasks worker OIDC authentication");
@@ -234,8 +234,8 @@ export function createCloudTasksMessageQueue(options) {
     const delay = durationSeconds(enqueueOptions.delay);
     const envelope = canonicalJson({ message, ...(delay === undefined ? {} : { delay }) });
     const digest = sha256(envelope), taskDigest = sha256Hex(envelope);
-    const storage = `${NI_PREFIX}${digest}`;
-    await immutableStorage.retain(Object.freeze({ identity: storage, mediaType: "application/vnd.fedify.message+json", bytes: Buffer.from(envelope, "utf8") }));
+    const custody = `${NI_PREFIX}${digest}`;
+    await immutableCustody.retain(Object.freeze({ identity: custody, mediaType: "application/vnd.fedify.message+json", bytes: Buffer.from(envelope, "utf8") }));
     const correlation = `urn:fedify:cloud-tasks:${digest}`;
     const scheduled = scheduleTime(delay);
     const task = {
@@ -244,7 +244,7 @@ export function createCloudTasksMessageQueue(options) {
         httpMethod: "POST",
         url: targetUrl.href,
         headers: { "content-type": "application/json" },
-        body: base64url(JSON.stringify({ v: 1, custody: storage, correlation })),
+        body: base64url(JSON.stringify({ v: 1, custody, correlation })),
         oidcToken: { serviceAccountEmail, audience },
       },
       ...(scheduled === undefined ? {} : { scheduleTime: scheduled }),
@@ -270,9 +270,9 @@ export function createCloudTasksMessageQueue(options) {
       return new Response("invalid task receipt", { status: 400 });
     }
     if (handler === undefined) return new Response("Fedify listener is not registered", { status: 503 });
-    const kept = await immutableStorage.retrieve(receipt.custody);
-    if (kept === undefined) return new Response("immutable custody not found", { status: 503 });
-    const envelope = Buffer.from(kept).toString("utf8");
+    const retained = await immutableCustody.retrieve(receipt.custody);
+    if (retained === undefined) return new Response("immutable custody not found", { status: 503 });
+    const envelope = Buffer.from(retained).toString("utf8");
     const digest = sha256(envelope);
     if (receipt.custody !== `${NI_PREFIX}${digest}` || receipt.correlation !== `urn:fedify:cloud-tasks:${digest}`) return new Response("custody correlation mismatch", { status: 400 });
     let parsed;
