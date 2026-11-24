@@ -1,0 +1,4 @@
+[submodule "lib/legacy/gcloud-runtime-authorities-service"]
+	path = lib/legacy/gcloud-runtime-authorities-service
+	url = https://github.com/red-cup-engineering/gcloud-runtime-authorities-service.git
+	branch = main

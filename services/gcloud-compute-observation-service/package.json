@@ -1,0 +1,33 @@
+{
+  "name": "@red-cup-engineering/gcloud-compute-observation-service",
+  "version": "0.1.3-dev.0",
+  "private": false,
+  "type": "module",
+  "description": "Read-only Google Cloud compute inventory through an injected native command boundary.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/gcloud-engineering-services-section.git",
+    "directory": "services/gcloud-compute-observation-service"
+  },
+  "exports": {
+    ".": "./src/observe-compute-resources.mjs"
+  },
+  "scripts": {
+    "check": "node --check src/observe-compute-resources.mjs",
+    "verify": "npm run check"
+  },
+  "files": [
+    "package.json",
+    "README*",
+    "LICENSE*",
+    "src"
+  ],
+  "license": "MIT",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  },
+  "dependencies": {
+    "@red-cup-engineering/signcell": "^0.18.0 || 0.18.1-dev.0"
+  }
+}
