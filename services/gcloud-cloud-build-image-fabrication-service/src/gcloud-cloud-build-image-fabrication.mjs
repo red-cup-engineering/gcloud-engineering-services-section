@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from "node:crypto";
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 
 export const ACTOR = "urn:ame:gcloud-cloud-build-image-fabrication-service";
@@ -6,7 +7,7 @@ const PROJECT = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/u;
 const IMAGE = /^[a-z]+-[a-z]+[0-9]-docker\.pkg\.dev\/[a-z][a-z0-9-]{4,28}[a-z0-9]\/[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*:[A-Za-z0-9._-]+$/u;
 const DIGEST = /^sha256:[a-f0-9]{64}$/u;
 function exact(value, label, pattern) { if (typeof value !== "string" || !pattern.test(value)) throw new Error(`invalid ${label}`); return value; }
-function receipt(request, content) { const digest = createHash("sha256").update(JSON.stringify(request)).digest("hex"); return Object.freeze({ "@context":"https://www.w3.org/ns/activitystreams", id:`urn:uuid:${randomUUID()}`, type:"Create", actor:ACTOR, published:new Date().toISOString(), object:{ type:"Activity", name:"fabricate-cloud-build-image", content }, "union:requestDigest":`sha256:${digest}` }); }
+function receipt(request, content) { const digest = sha256Hex(JSON.stringify(request)); return Object.freeze({ "@context":"https://www.w3.org/ns/activitystreams", id:`urn:uuid:${randomUUID()}`, type:"Create", actor:ACTOR, published:new Date().toISOString(), object:{ type:"Activity", name:"fabricate-cloud-build-image", content }, "union:requestDigest":`sha256:${digest}` }); }
 
 /** Builds one declared context and returns only its verified immutable image identity. */
 export async function fabricateCloudBuildImage(input, { gcloud } = {}) {

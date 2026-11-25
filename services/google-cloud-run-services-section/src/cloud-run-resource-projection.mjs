@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { canonicalEqual, exactIdentity } from "@red-cup-engineering/semiotic-content-address-system";
 import { readFileSync } from "node:fs";
 import { admitCloudRunServiceStageReceipt } from "@red-cup-engineering/gcloud-cloud-run-actuator-service";
 
@@ -25,14 +25,6 @@ const desiredUrl = new URL("../content/resources/notebooklm-inference-team.desir
 
 function clone(value) { return structuredClone(value); }
 function plain(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
-function canonical(value) {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number" && Number.isFinite(value)) return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
-  if (plain(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
-  throw new TypeError("projection values must be finite JSON records");
-}
-function contentId(value) { return `ni:///sha-256;${createHash("sha256").update(canonical(value)).digest("base64url")}`; }
 function exactKeys(value, keys) {
   return plain(value) && Object.keys(value).sort().join("\0") === [...keys].sort().join("\0");
 }
@@ -181,7 +173,7 @@ function resource(value) {
 function admitSelectedOciImageObservation(value, construction) {
   if (!plain(value) || value.type !== "OciImageObservation" || value.version !== 1 || value.status !== "observed" || !Array.isArray(value.effects) || value.effects.length !== 0 || !CONTENT_ID.test(value.id ?? "")) throw new TypeError("OCI image observation is not one effect-free content-addressed observation");
   const body = Object.fromEntries(Object.entries(value).filter(([key]) => key !== "id"));
-  if (contentId(body) !== value.id) throw new TypeError("OCI image observation content identity is invalid");
+  if (exactIdentity(body) !== value.id) throw new TypeError("OCI image observation content identity is invalid");
   const selected = construction.ociSelection;
   if (value.reference !== selected.requestedReference || value.requestedDigest !== selected.tagIndexDigest || value.index?.digest !== selected.tagIndexDigest || value.manifest?.digest !== selected.selectedManifestDigest || value.config?.digest !== selected.configDigest || value.platform?.os !== selected.platform.os || value.platform?.architecture !== selected.platform.architecture || value.config?.os !== selected.platform.os || value.config?.architecture !== selected.platform.architecture || value.node?.status !== "observed" || value.node.version !== construction.authoritySelections.node.version || value.debian?.status !== "observed" || value.debian.suite !== construction.authoritySelections.debian.suite || !Array.isArray(value.unresolved) || value.unresolved.length !== 0) throw new TypeError("OCI image observation does not match the selected image");
   const occupied = value.finalRootfs?.occupied?.union;
@@ -191,7 +183,7 @@ function admitSelectedOciImageObservation(value, construction) {
 function admitProviderCompositionInputs(value, releaseEvidence, selection) {
   if (!plain(value)) throw new TypeError("provider requirement owner output is required");
   const provider = value.providerContract;
-  if (provider?.package?.name !== selection.package.name || provider.package.version !== selection.package.version || canonical(provider.requirementsLock) !== canonical(selection.requirementsLock)) throw new TypeError("provider requirement does not match the selected package contract");
+  if (provider?.package?.name !== selection.package.name || provider.package.version !== selection.package.version || !canonicalEqual(provider.requirementsLock, selection.requirementsLock)) throw new TypeError("provider requirement does not match the selected package contract");
   if (!exactKeys(releaseEvidence, ["providerCatalog", "runtimeReleaseCatalogReceipt", "verificationObservation"]) || ![releaseEvidence.providerCatalog, releaseEvidence.runtimeReleaseCatalogReceipt, releaseEvidence.verificationObservation].every(plain)) throw new TypeError("provider release owner outputs are required");
   return { value, releaseEvidence };
 }

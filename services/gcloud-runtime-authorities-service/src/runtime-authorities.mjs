@@ -1,5 +1,6 @@
-import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
-import { createHash, createPublicKey, verify as verifySignature } from "node:crypto";
+import { canonicalJson } from "@red-cup-engineering/json-engine/canonical-json";
+import { sha256Base64Url, sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { createPublicKey, verify as verifySignature } from "node:crypto";
 
 const TASKS_ROOT = "https://cloudtasks.googleapis.com/v2/";
 const STORAGE_ROOT = "https://storage.googleapis.com/storage/v1/";
@@ -17,7 +18,6 @@ function requiredFunction(value, label) {
 }
 
 function base64url(bytes) { return Buffer.from(bytes).toString("base64url"); }
-function sha256(text) { return createHash("sha256").update(text).digest("base64url"); }
 
 
 const GOOGLE_METADATA_TOKEN = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
@@ -113,32 +113,6 @@ export function createGoogleOidcVerifier(options) {
 
 // Fedify messages are JSON carriers.  Deliberately reject values whose JSON
 // representation is ambiguous rather than assigning two messages one task.
-function canonicalJson(value, seen = new Set()) {
-  if (value === null) return "null";
-  if (typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "boolean") return value ? "true" : "false";
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new TypeError("runtime message must contain only finite JSON numbers");
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    if (seen.has(value)) throw new TypeError("runtime message must not be cyclic");
-    seen.add(value);
-    const result = `[${value.map((item) => canonicalJson(item, seen)).join(",")}]`;
-    seen.delete(value);
-    return result;
-  }
-  if (typeof value === "object") {
-    if (seen.has(value)) throw new TypeError("runtime message must not be cyclic");
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== Object.prototype && prototype !== null) throw new TypeError("runtime message must contain only JSON objects");
-    seen.add(value);
-    const result = `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key], seen)}`).join(",")}}`;
-    seen.delete(value);
-    return result;
-  }
-  throw new TypeError("runtime message must contain only JSON values");
-}
 
 function durationSeconds(delay) {
   if (delay === undefined) return undefined;
@@ -234,7 +208,7 @@ export function createCloudTasksMessageQueue(options) {
     if (enqueueOptions.orderingKey !== undefined) throw new TypeError("Cloud Tasks MessageQueue does not support Fedify orderingKey; configure an ordered provider before using it");
     const delay = durationSeconds(enqueueOptions.delay);
     const envelope = canonicalJson({ message, ...(delay === undefined ? {} : { delay }) });
-    const digest = sha256(envelope), taskDigest = sha256Hex(envelope);
+    const digest = sha256Base64Url(envelope), taskDigest = sha256Hex(envelope);
     const custody = `${NI_PREFIX}${digest}`;
     await immutableCustody.retain(Object.freeze({ identity: custody, mediaType: "application/vnd.fedify.message+json", bytes: Buffer.from(envelope, "utf8") }));
     const correlation = `urn:fedify:cloud-tasks:${digest}`;
@@ -274,7 +248,7 @@ export function createCloudTasksMessageQueue(options) {
     const retained = await immutableCustody.retrieve(receipt.custody);
     if (retained === undefined) return new Response("immutable custody not found", { status: 503 });
     const envelope = Buffer.from(retained).toString("utf8");
-    const digest = sha256(envelope);
+    const digest = sha256Base64Url(envelope);
     if (receipt.custody !== `${NI_PREFIX}${digest}` || receipt.correlation !== `urn:fedify:cloud-tasks:${digest}`) return new Response("custody correlation mismatch", { status: 400 });
     let parsed;
     try { parsed = JSON.parse(envelope); } catch { return new Response("invalid retained message", { status: 503 }); }
