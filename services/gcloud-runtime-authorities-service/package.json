@@ -18,6 +18,7 @@
     "verify": "npm run check"
   },
   "dependencies": {
+    "@red-cup-engineering/json-engine": "0.5.5-dev.0",
     "@red-cup-engineering/semiotic-content-address-system": "^0.1.7 || 0.1.8-dev.0"
   }
 }
