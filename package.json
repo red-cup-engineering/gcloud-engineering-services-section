@@ -12,6 +12,7 @@
     "./google-cloud-kms-signer": "./scripts/google-cloud-kms-signer.mjs"
   },
   "dependencies": {
+    "@red-cup-engineering/json-engine": "^0.5.0",
     "@red-cup-engineering/ethereum-engineering-services-section": "^0.15.2",
     "@red-cup-engineering/http-engineering-services-section": "^0.6.6",
     "@red-cup-engineering/semiotic-content-address-system": "0.1.9",
